@@ -1,3 +1,18 @@
 <resources>
-    <string name="app_name">FitnessApp</string>
+    <string name="app_name">Fitness Tracker</string>
+
+    <!--authorization-->
+    <string name="email">Email</string>
+    <string name="password">Password</string>
+    <string name="signing_in">Sign in</string>
+    <string name="login">Login</string>
+    <string name="register">Register</string>
+    <string name="registration">Registration</string>
+    <string name="repeat_password">Repeat password</string>
+    <string name="firstname">Firstname</string>
+    <string name="lastname">Lastname</string>
+    <string name="no_callback_implementation_error">must implement AuthorizationCallback</string>
+    <string name="empty_fields_toast">Fill all fields!</string>
+
+
 </resources>

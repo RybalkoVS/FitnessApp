@@ -1,0 +1,9 @@
+<resources>
+    <!--authorization    -->
+    <dimen name="input_field_width">300dp</dimen>
+    <dimen name="input_field_height">56dp</dimen>
+    <dimen name="interval_between_fields">8dp</dimen>
+
+    <!--text size    -->
+    <dimen name="big_text_size">32sp</dimen>
+</resources>
