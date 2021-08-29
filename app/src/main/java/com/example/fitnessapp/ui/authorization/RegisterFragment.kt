@@ -10,6 +10,7 @@ import android.widget.EditText
 import android.widget.Toast
 import com.example.fitnessapp.R
 import java.lang.RuntimeException
+import java.util.regex.Matcher
 
 class RegisterFragment : Fragment(R.layout.fragment_register) {
 
@@ -20,6 +21,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         const val LASTNAME_INPUT = "LASTNAME_INPUT"
         const val PASSWORD_INPUT = "PASSWORD_INPUT"
         const val REPEAT_PASSWORD_INPUT = "REPEAT_PASSWORD_INPUT"
+        const val EMAIL_PATTERN = "^[A-Z0-9+_.-]+@[A-Z0-9.-]+\$"
+        const val MIN_PASSWORD_LENGTH = 8
 
         fun newInstance(args: Bundle?): RegisterFragment {
             val fragment = RegisterFragment()
@@ -59,7 +62,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                     Toast.LENGTH_SHORT
                 ).show()
             } else {
-                if (inputDataIsValid()) {
+                if (isEnteredDataValid()) {
                     sendRegisterRequest()
                 }
             }
@@ -70,8 +73,44 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         restoreEnteredData(this.arguments)
     }
 
-    private fun inputDataIsValid(): Boolean {
-        return true
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        with(outState) {
+            putString(EMAIL_INPUT, emailEditText.text.toString())
+            putString(FIRSTNAME_INPUT, firstnameEditText.text.toString())
+            putString(LASTNAME_INPUT, lastnameEditText.text.toString())
+            putString(PASSWORD_INPUT, passwordEditText.text.toString())
+            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.text.toString())
+        }
+        authorizationActivityCallback?.saveEnteredData(outState)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        registerBtn.setOnClickListener(null)
+        moveToLoginBtn.setOnClickListener(null)
+    }
+
+    override fun onDetach() {
+        super.onDetach()
+        authorizationActivityCallback = null
+    }
+
+    private fun isEmailValid(email: String): Boolean {
+        val pattern = EMAIL_PATTERN.toRegex()
+        return email.matches(pattern)
+    }
+
+    private fun isPasswordCorrect(password: String, repeatedPassword: String): Boolean {
+        return password == repeatedPassword && password.length >= MIN_PASSWORD_LENGTH
+    }
+
+    private fun isEnteredDataValid(): Boolean {
+        return isEmailValid(emailEditText.text.toString())
+                && isPasswordCorrect(
+            passwordEditText.text.toString(),
+            repeatPasswordEditText.text.toString()
+        )
     }
 
     private fun moveToLogin() {
@@ -112,23 +151,5 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             passwordEditText.setText(it.getString(PASSWORD_INPUT))
             repeatPasswordEditText.setText(it.getString(REPEAT_PASSWORD_INPUT))
         }
-    }
-
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        with(outState) {
-            putString(EMAIL_INPUT, emailEditText.text.toString())
-            putString(FIRSTNAME_INPUT, firstnameEditText.text.toString())
-            putString(LASTNAME_INPUT, lastnameEditText.text.toString())
-            putString(PASSWORD_INPUT, passwordEditText.text.toString())
-            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.text.toString())
-        }
-        authorizationActivityCallback?.saveEnteredData(outState)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        registerBtn.setOnClickListener(null)
-        moveToLoginBtn.setOnClickListener(null)
     }
 }
