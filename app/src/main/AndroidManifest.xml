@@ -10,10 +10,11 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.FitnessApp">
         <activity
-            android:name=".ui.authorization.AuthorizationActivity"
+            android:name=".presentation.authorization.AuthorizationActivity"
             android:exported="true" />
         <activity
-            android:name=".ui.splash.SplashScreenActivity"
+            android:name=".presentation.splash.SplashScreenActivity"
+            android:screenOrientation="portrait"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -22,7 +23,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".presentation.main.MainActivity"
             android:exported="true" />
     </application>
 

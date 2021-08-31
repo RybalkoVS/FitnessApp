@@ -1,4 +1,4 @@
-package com.example.fitnessapp.ui.authorization
+package com.example.fitnessapp.presentation.authorization
 
 import android.os.Bundle
 

@@ -1,4 +1,4 @@
-package com.example.fitnessapp.ui.authorization
+package com.example.fitnessapp.presentation.authorization
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -10,6 +10,7 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
     companion object {
         const val CURRENT_FRAGMENT = "CURRENT_FRAGMENT"
         const val SAVED_DATA = "SAVED_DATA"
+        const val MIN_BACK_STACK_SIZE = 1
     }
 
     private var currentFragmentTag: String? = null
@@ -29,25 +30,34 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
         }
     }
 
-    override fun onSaveInstanceState(outState: Bundle) {
-        super.onSaveInstanceState(outState)
-        val currentFragment = supportFragmentManager.findFragmentById(R.id.fragment_container)
-        if (currentFragment != null) {
-            outState.putString(CURRENT_FRAGMENT, currentFragment.tag)
-            outState.putBundle(SAVED_DATA, enteredData)
+    private fun restoreFragmentState(tag: String) {
+        if (tag == RegisterFragment.TAG) {
+            moveToRegisterFragment()
+        } else {
+            moveToLoginFragment()
         }
     }
 
     override fun moveToLoginFragment() {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, LoginFragment.newInstance(enteredData), LoginFragment.TAG)
+            .replace(
+                R.id.fragment_container_authorization,
+                LoginFragment.newInstance(enteredData),
+                LoginFragment.TAG
+            )
+            .addToBackStack(LoginFragment.TAG)
             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
             .commit()
     }
 
     override fun moveToRegisterFragment() {
         supportFragmentManager.beginTransaction()
-            .replace(R.id.fragment_container, RegisterFragment.newInstance(enteredData), RegisterFragment.TAG)
+            .replace(
+                R.id.fragment_container_authorization,
+                RegisterFragment.newInstance(enteredData),
+                RegisterFragment.TAG
+            )
+            .addToBackStack(RegisterFragment.TAG)
             .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
             .commit()
     }
@@ -56,11 +66,24 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
         enteredData = data
     }
 
-    private fun restoreFragmentState(tag: String) {
-        if (tag == RegisterFragment.TAG) {
-            moveToRegisterFragment()
-        } else {
-            moveToLoginFragment()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        val currentFragment =
+            supportFragmentManager.findFragmentById(R.id.fragment_container_authorization)
+        if (currentFragment != null) {
+            outState.putString(CURRENT_FRAGMENT, currentFragment.tag)
+            outState.putBundle(SAVED_DATA, enteredData)
+        }
+    }
+
+    override fun onBackPressed() {
+        when (supportFragmentManager.backStackEntryCount) {
+            MIN_BACK_STACK_SIZE -> {
+                finish()
+            }
+            else -> {
+                super.onBackPressed()
+            }
         }
     }
 

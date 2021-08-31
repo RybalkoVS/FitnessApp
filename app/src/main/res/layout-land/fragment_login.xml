@@ -11,7 +11,7 @@
         android:layout_height="wrap_content"
         android:gravity="center"
         android:orientation="vertical"
-        tools:context=".ui.authorization.LoginFragment">
+        tools:context=".presentation.authorization.LoginFragment">
 
         <com.google.android.material.textview.MaterialTextView
             android:id="@+id/text_view_login_label"

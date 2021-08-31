@@ -13,6 +13,6 @@
     <string name="lastname">Lastname</string>
     <string name="no_callback_implementation_error">must implement AuthorizationCallback</string>
     <string name="empty_fields_toast">Fill all fields!</string>
-
+    <string name="incorrect_email_or_password_toast">Incorrect email or password</string>
 
 </resources>
