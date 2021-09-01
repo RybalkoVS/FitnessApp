@@ -103,7 +103,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             passwordEditText?.text.toString(),
             repeatPasswordEditText?.text.toString()
         )
-        if(!isDataValid){
+        if (!isDataValid) {
             showIncorrectDataNotification()
         }
         return isDataValid
@@ -144,8 +144,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-    private fun saveEnteredData()
-    {
+    private fun saveEnteredData() {
         val bundle = Bundle()
         with(bundle) {
             putString(EMAIL_INPUT, emailEditText?.text.toString())
@@ -172,7 +171,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         super.onDetach()
         authorizationActivityCallback = null
     }
-
 
 
 }

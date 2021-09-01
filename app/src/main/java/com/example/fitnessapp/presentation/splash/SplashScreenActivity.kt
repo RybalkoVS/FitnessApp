@@ -1,6 +1,5 @@
 package com.example.fitnessapp.presentation.splash
 
-import android.animation.AnimatorInflater
 import android.animation.ObjectAnimator
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
@@ -9,36 +8,31 @@ import android.widget.ImageView
 import androidx.core.animation.doOnEnd
 import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.R
+import com.example.fitnessapp.presentation.PreferencesStore
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
 
 class SplashScreenActivity : AppCompatActivity() {
 
-    companion object{
-        const val APP_PREFERENCES = "APP_PREFERENCES"
-        const val AUTHORIZATION_TOKEN = "AUTHORIZATION_TOKEN"
+    companion object {
+        const val ROTATE_ANIM_DURATION = 3000L
+        const val ROTATE_ANIM_DEGREE = 360f
     }
 
-    private var appLogo: ImageView? = null
-    private var rotationAnim: ObjectAnimator? = null
+    private lateinit var appLogo: ImageView
+    private var preferencesStore: PreferencesStore? = PreferencesStore(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_splash_screen)
         appLogo = findViewById(R.id.app_logo)
-        rotationAnim = AnimatorInflater.loadAnimator(this, R.animator.anim_rotation) as ObjectAnimator
-        rotationAnim?.apply {
-            target = appLogo
+        ObjectAnimator.ofFloat(appLogo, "rotation", ROTATE_ANIM_DEGREE).apply {
+            duration = ROTATE_ANIM_DURATION
             start()
             doOnEnd {
                 moveToNextScreen()
                 finish()
             }
         }
-    }
-
-    private fun isUserAuthorized(): Boolean {
-        val token = getAuthorizationToken()
-        return !token.isNullOrEmpty()
     }
 
     private fun moveToNextScreen() {
@@ -51,9 +45,14 @@ class SplashScreenActivity : AppCompatActivity() {
         }
     }
 
-    private fun getAuthorizationToken(): String? {
-        val preferences = getSharedPreferences(APP_PREFERENCES, MODE_PRIVATE)
-        return preferences.getString(AUTHORIZATION_TOKEN, "")
+    private fun isUserAuthorized(): Boolean {
+        val token = preferencesStore?.getAuthorizationToken()
+        return !token.isNullOrEmpty()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        preferencesStore = null
     }
 
 }
