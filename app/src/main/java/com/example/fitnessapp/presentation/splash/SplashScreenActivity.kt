@@ -19,7 +19,7 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private lateinit var appLogo: ImageView
-    private var preferencesStore = PreferencesStore(this)
+    private var preferencesStore = PreferencesStore(context = this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

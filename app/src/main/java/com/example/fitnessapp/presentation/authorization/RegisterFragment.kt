@@ -1,14 +1,22 @@
 package com.example.fitnessapp.presentation.authorization
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
+import bolts.Task
+import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
+import com.example.fitnessapp.data.model.registration.RegistrationRequest
+import com.example.fitnessapp.data.model.registration.RegistrationResponse
+import com.example.fitnessapp.data.network.ResponseStatus
+import com.example.fitnessapp.presentation.PreferencesStore
+import com.example.fitnessapp.presentation.ToastProvider
+import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
 class RegisterFragment : Fragment(R.layout.fragment_register) {
@@ -30,6 +38,9 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
     private var autDataValidator = AuthorizationDataValidator()
+    private var remoteRepository = FitnessApp.INSTANCE.remoteRepository
+    private var toastProvider = ToastProvider(context = context)
+    private lateinit var preferencesStore: PreferencesStore
     private lateinit var registerBtn: Button
     private lateinit var moveToLoginBtn: Button
     private lateinit var emailEditText: EditText
@@ -40,6 +51,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        preferencesStore = PreferencesStore(context = context)
         if (context is AuthorizationActivityCallback) {
             authorizationActivityCallback = context
         } else {
@@ -80,18 +92,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 repeatPasswordEditText.text.toString()
             )
         ) {
-            showEmptyInputNotification()
+            toastProvider.showErrorMessage(getString(R.string.empty_fields_toast))
         } else {
             checkEnteredData()
         }
-    }
-
-    private fun showEmptyInputNotification() {
-        Toast.makeText(
-            context,
-            getString(R.string.empty_fields_toast),
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
     private fun checkEnteredData() {
@@ -103,20 +107,42 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         if (isDataValid) {
             sendRegisterRequest()
         } else {
-            showIncorrectDataNotification()
+            toastProvider.showErrorMessage(error = getString(R.string.empty_fields_toast))
         }
     }
 
     private fun sendRegisterRequest() {
-        TODO()
+        remoteRepository.register(
+            registerRequest = RegistrationRequest(
+                email = emailEditText.text.toString(),
+                firstName = firstnameEditText.text.toString(),
+                lastName = lastnameEditText.text.toString(),
+                password = passwordEditText.text.toString()
+            )
+        ).continueWith({ task ->
+            if (task.error != null) {
+                toastProvider.showErrorMessage(error = task.error.message.toString())
+            } else {
+                chekRegisterResponse(task.result)
+            }
+        }, Task.UI_THREAD_EXECUTOR)
     }
 
-    private fun showIncorrectDataNotification() {
-        Toast.makeText(
-            context,
-            getString(R.string.incorrect_email_or_password_toast),
-            Toast.LENGTH_SHORT
-        ).show()
+    private fun chekRegisterResponse(registrationResponse: RegistrationResponse) {
+        when (registrationResponse.status) {
+            ResponseStatus.OK.toString() -> {
+                preferencesStore.saveAuthorizationToken(registrationResponse.token)
+                moveToMainScreen()
+            }
+            ResponseStatus.ERROR.toString() -> {
+                toastProvider.showErrorMessage(error = registrationResponse.errorCode)
+            }
+        }
+    }
+
+    private fun moveToMainScreen() {
+        val intent = Intent(context, MainActivity::class.java)
+        startActivity(intent)
     }
 
     private fun moveToLogin() {

@@ -9,6 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import com.example.fitnessapp.R
+import com.example.fitnessapp.presentation.ToastProvider
 import java.lang.RuntimeException
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -27,6 +28,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
     private var authDataValidator = AuthorizationDataValidator()
+    private var toastProvider = ToastProvider(context = context)
     private lateinit var loginBtn: Button
     private lateinit var moveToRegisterBtn: Button
     private lateinit var emailEditText: EditText
@@ -68,18 +70,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 passwordEditText.text.toString()
             )
         ) {
-            showEmptyInputNotification()
+            toastProvider.showErrorMessage(error = getString(R.string.empty_fields_toast))
         } else {
             sendLoginRequest()
         }
-    }
-
-    private fun showEmptyInputNotification() {
-        Toast.makeText(
-            context,
-            getString(R.string.empty_fields_toast),
-            Toast.LENGTH_SHORT
-        ).show()
     }
 
     private fun sendLoginRequest() {
