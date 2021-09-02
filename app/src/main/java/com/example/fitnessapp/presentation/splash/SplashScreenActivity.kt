@@ -19,7 +19,7 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private lateinit var appLogo: ImageView
-    private var preferencesStore: PreferencesStore? = PreferencesStore(this)
+    private var preferencesStore = PreferencesStore(this)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,13 +46,8 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private fun isUserAuthorized(): Boolean {
-        val token = preferencesStore?.getAuthorizationToken()
+        val token = preferencesStore.getAuthorizationToken()
         return !token.isNullOrEmpty()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        preferencesStore = null
     }
 
 }

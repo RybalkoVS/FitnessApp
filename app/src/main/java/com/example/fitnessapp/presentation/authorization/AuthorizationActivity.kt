@@ -31,10 +31,13 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
     }
 
     private fun restoreFragmentState(tag: String) {
-        if (tag == RegisterFragment.TAG) {
-            moveToRegisterFragment()
-        } else {
-            moveToLoginFragment()
+        when (tag) {
+            RegisterFragment.TAG -> {
+                moveToRegisterFragment()
+            }
+            else -> {
+                moveToLoginFragment()
+            }
         }
     }
 

@@ -20,7 +20,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         const val LASTNAME_INPUT = "LASTNAME_INPUT"
         const val PASSWORD_INPUT = "PASSWORD_INPUT"
         const val REPEAT_PASSWORD_INPUT = "REPEAT_PASSWORD_INPUT"
-        const val EMAIL_PATTERN = "^[\\w-.]+@([\\w-]+\\.)+[\\w-]{2,4}\$"
 
         fun newInstance(args: Bundle?): RegisterFragment {
             val fragment = RegisterFragment()
@@ -30,13 +29,14 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
-    private var registerBtn: Button? = null
-    private var moveToLoginBtn: Button? = null
-    private var emailEditText: EditText? = null
-    private var firstnameEditText: EditText? = null
-    private var lastnameEditText: EditText? = null
-    private var passwordEditText: EditText? = null
-    private var repeatPasswordEditText: EditText? = null
+    private var autDataValidator = AuthorizationDataValidator()
+    private lateinit var registerBtn: Button
+    private lateinit var moveToLoginBtn: Button
+    private lateinit var emailEditText: EditText
+    private lateinit var firstnameEditText: EditText
+    private lateinit var lastnameEditText: EditText
+    private lateinit var passwordEditText: EditText
+    private lateinit var repeatPasswordEditText: EditText
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -50,18 +50,12 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
-        underlineLoginButton()
+        moveToLoginBtn.paintFlags = Paint.UNDERLINE_TEXT_FLAG
 
-        registerBtn?.setOnClickListener {
-            if (isInputEmpty()) {
-                showEmptyFieldsNotification()
-            } else {
-                if (isEnteredDataValid()) {
-                    sendRegisterRequest()
-                }
-            }
+        registerBtn.setOnClickListener {
+            checkEmptyInput()
         }
-        moveToLoginBtn?.setOnClickListener {
+        moveToLoginBtn.setOnClickListener {
             moveToLogin()
         }
         restoreEnteredData(this.arguments)
@@ -77,19 +71,22 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         repeatPasswordEditText = v.findViewById(R.id.edit_text_repeat_password)
     }
 
-    private fun underlineLoginButton() {
-        moveToLoginBtn?.paintFlags = Paint.UNDERLINE_TEXT_FLAG
+    private fun checkEmptyInput() {
+        if (autDataValidator.isInputEmpty(
+                emailEditText.text.toString(),
+                firstnameEditText.text.toString(),
+                lastnameEditText.text.toString(),
+                passwordEditText.text.toString(),
+                repeatPasswordEditText.text.toString()
+            )
+        ) {
+            showEmptyInputNotification()
+        } else {
+            checkEnteredData()
+        }
     }
 
-    private fun isInputEmpty(): Boolean {
-        return emailEditText?.text.isNullOrEmpty()
-                || passwordEditText?.text.isNullOrEmpty()
-                || firstnameEditText?.text.isNullOrEmpty()
-                || lastnameEditText?.text.isNullOrEmpty()
-                || repeatPasswordEditText?.text.isNullOrEmpty()
-    }
-
-    private fun showEmptyFieldsNotification() {
+    private fun showEmptyInputNotification() {
         Toast.makeText(
             context,
             getString(R.string.empty_fields_toast),
@@ -97,25 +94,21 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         ).show()
     }
 
-    private fun isEnteredDataValid(): Boolean {
-        val isDataValid = isEmailValid(emailEditText?.text.toString())
-                && doPasswordsMatch(
-            passwordEditText?.text.toString(),
-            repeatPasswordEditText?.text.toString()
+    private fun checkEnteredData() {
+        val isDataValid = autDataValidator.isEmailValid(emailEditText.text.toString())
+                && autDataValidator.isPasswordValid(
+            password = passwordEditText.text.toString(),
+            repeatPassword = repeatPasswordEditText.text.toString()
         )
-        if (!isDataValid) {
+        if (isDataValid) {
+            sendRegisterRequest()
+        } else {
             showIncorrectDataNotification()
         }
-        return isDataValid
     }
 
-    private fun isEmailValid(email: String): Boolean {
-        val pattern = EMAIL_PATTERN.toRegex()
-        return email.matches(pattern)
-    }
-
-    private fun doPasswordsMatch(password: String, repeatedPassword: String): Boolean {
-        return password == repeatedPassword
+    private fun sendRegisterRequest() {
+        TODO()
     }
 
     private fun showIncorrectDataNotification() {
@@ -126,50 +119,45 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         ).show()
     }
 
-    private fun sendRegisterRequest() {
-        TODO()
-    }
-
     private fun moveToLogin() {
         authorizationActivityCallback?.moveToLoginFragment()
     }
 
     private fun restoreEnteredData(data: Bundle?) {
         data?.let {
-            emailEditText?.setText(it.getString(EMAIL_INPUT))
-            firstnameEditText?.setText(it.getString(FIRSTNAME_INPUT))
-            lastnameEditText?.setText(it.getString(LASTNAME_INPUT))
-            passwordEditText?.setText(it.getString(PASSWORD_INPUT))
-            repeatPasswordEditText?.setText(it.getString(REPEAT_PASSWORD_INPUT))
+            emailEditText.setText(it.getString(EMAIL_INPUT))
+            firstnameEditText.setText(it.getString(FIRSTNAME_INPUT))
+            lastnameEditText.setText(it.getString(LASTNAME_INPUT))
+            passwordEditText.setText(it.getString(PASSWORD_INPUT))
+            repeatPasswordEditText.setText(it.getString(REPEAT_PASSWORD_INPUT))
         }
     }
 
     private fun saveEnteredData() {
-        val bundle = Bundle()
-        with(bundle) {
-            putString(EMAIL_INPUT, emailEditText?.text.toString())
-            putString(FIRSTNAME_INPUT, firstnameEditText?.text.toString())
-            putString(LASTNAME_INPUT, lastnameEditText?.text.toString())
-            putString(PASSWORD_INPUT, passwordEditText?.text.toString())
-            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText?.text.toString())
+        val bundle = Bundle().apply {
+            putString(EMAIL_INPUT, emailEditText.text.toString())
+            putString(FIRSTNAME_INPUT, firstnameEditText.text.toString())
+            putString(LASTNAME_INPUT, lastnameEditText.text.toString())
+            putString(PASSWORD_INPUT, passwordEditText.text.toString())
+            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.text.toString())
         }
         authorizationActivityCallback?.saveEnteredData(bundle)
     }
 
     override fun onStop() {
-        super.onStop()
         saveEnteredData()
+        super.onStop()
     }
 
     override fun onDestroy() {
+        registerBtn.setOnClickListener(null)
+        moveToLoginBtn.setOnClickListener(null)
         super.onDestroy()
-        registerBtn?.setOnClickListener(null)
-        moveToLoginBtn?.setOnClickListener(null)
     }
 
     override fun onDetach() {
-        super.onDetach()
         authorizationActivityCallback = null
+        super.onDetach()
     }
 
 

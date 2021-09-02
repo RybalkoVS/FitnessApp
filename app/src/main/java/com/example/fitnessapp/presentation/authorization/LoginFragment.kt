@@ -26,10 +26,11 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
-    private var loginBtn: Button? = null
-    private var moveToRegisterBtn: Button? = null
-    private var emailEditText: EditText? = null
-    private var passwordEditText: EditText? = null
+    private var authDataValidator = AuthorizationDataValidator()
+    private lateinit var loginBtn: Button
+    private lateinit var moveToRegisterBtn: Button
+    private lateinit var emailEditText: EditText
+    private lateinit var passwordEditText: EditText
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -43,16 +44,12 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
-        underlineRegisterButton()
+        moveToRegisterBtn.paintFlags = Paint.UNDERLINE_TEXT_FLAG
 
-        loginBtn?.setOnClickListener {
-            if (isInputEmpty()) {
-                showEmptyFieldsNotification(view.context)
-            } else {
-                sendLoginRequest()
-            }
+        loginBtn.setOnClickListener {
+            checkEmptyInput()
         }
-        moveToRegisterBtn?.setOnClickListener {
+        moveToRegisterBtn.setOnClickListener {
             moveToRegistration()
         }
         restoreEnteredData(this.arguments)
@@ -65,15 +62,19 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         passwordEditText = v.findViewById(R.id.edit_text_password)
     }
 
-    private fun underlineRegisterButton() {
-        moveToRegisterBtn?.paintFlags = Paint.UNDERLINE_TEXT_FLAG
+    private fun checkEmptyInput() {
+        if (authDataValidator.isInputEmpty(
+                emailEditText.text.toString(),
+                passwordEditText.text.toString()
+            )
+        ) {
+            showEmptyInputNotification()
+        } else {
+            sendLoginRequest()
+        }
     }
 
-    private fun isInputEmpty(): Boolean {
-        return emailEditText?.text.isNullOrEmpty() || passwordEditText?.text.isNullOrEmpty()
-    }
-
-    private fun showEmptyFieldsNotification(context: Context) {
+    private fun showEmptyInputNotification() {
         Toast.makeText(
             context,
             getString(R.string.empty_fields_toast),
@@ -91,34 +92,33 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private fun restoreEnteredData(data: Bundle?) {
         data?.let {
-            emailEditText?.setText(it.getString(EMAIL_INPUT_LOGIN))
-            passwordEditText?.setText(it.getString(PASSWORD_INPUT_LOGIN))
+            emailEditText.setText(it.getString(EMAIL_INPUT_LOGIN))
+            passwordEditText.setText(it.getString(PASSWORD_INPUT_LOGIN))
         }
     }
 
     override fun onPause() {
-        super.onPause()
         saveEnteredData()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        loginBtn?.setOnClickListener(null)
-        moveToRegisterBtn?.setOnClickListener(null)
-    }
-
-    override fun onDetach() {
-        super.onDetach()
-        authorizationActivityCallback = null
+        super.onPause()
     }
 
     private fun saveEnteredData() {
-        val bundle = Bundle()
-        with(bundle) {
-            putString(EMAIL_INPUT_LOGIN, emailEditText?.text.toString())
-            putString(PASSWORD_INPUT_LOGIN, passwordEditText?.text.toString())
+        val bundle = Bundle().apply {
+            putString(EMAIL_INPUT_LOGIN, emailEditText.text.toString())
+            putString(PASSWORD_INPUT_LOGIN, passwordEditText.text.toString())
         }
         authorizationActivityCallback?.saveEnteredData(bundle)
+    }
+
+    override fun onDestroy() {
+        moveToRegisterBtn.setOnClickListener(null)
+        loginBtn.setOnClickListener(null)
+        super.onDestroy()
+    }
+
+    override fun onDetach() {
+        authorizationActivityCallback = null
+        super.onDetach()
     }
 
 

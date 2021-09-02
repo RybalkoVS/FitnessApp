@@ -12,7 +12,7 @@
         android:id="@+id/text_view_login_label"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/signing_in"
+        android:text="@string/login"
         android:textColor="@color/main_color"
         android:textSize="@dimen/big_text_size"
         android:textStyle="bold" />
@@ -28,7 +28,8 @@
             android:layout_width="@dimen/input_field_width"
             android:layout_height="@dimen/input_field_height"
             android:hint="@string/email"
-            android:inputType="textEmailAddress" />
+            android:inputType="textEmailAddress"
+            tools:ignore="TextContrastCheck" />
     </com.google.android.material.textfield.TextInputLayout>
 
     <com.google.android.material.textfield.TextInputLayout
@@ -53,7 +54,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:backgroundTint="@color/main_color"
-        android:text="@string/login" />
+        android:text="@string/login"
+        tools:ignore="DuplicateSpeakableTextCheck" />
 
     <com.google.android.material.button.MaterialButton
         android:id="@+id/btn_move_to_register"
