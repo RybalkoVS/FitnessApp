@@ -2,6 +2,9 @@ package com.example.fitnessapp.presentation.authorization
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
+import androidx.fragment.app.Fragment
+import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.example.fitnessapp.R
 
@@ -24,45 +27,35 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
             currentFragmentTag = savedInstanceState.getString(CURRENT_FRAGMENT)
             currentFragmentTag?.let {
                 restoreFragmentState(it)
-            } ?: moveToLoginFragment()
+            }
         } else {
-            moveToLoginFragment()
+            showFragment(LoginFragment.newInstance(null), LoginFragment.TAG)
         }
     }
 
     private fun restoreFragmentState(tag: String) {
         when (tag) {
             RegisterFragment.TAG -> {
-                moveToRegisterFragment()
+                showFragment(RegisterFragment.newInstance(enteredData), tag)
             }
             else -> {
-                moveToLoginFragment()
+                showFragment(LoginFragment.newInstance(enteredData), tag)
             }
         }
     }
 
-    override fun moveToLoginFragment() {
-        supportFragmentManager.beginTransaction()
-            .replace(
+    override fun showFragment(fragment: Fragment, fragmentTag: String) {
+        supportFragmentManager.popBackStack(fragmentTag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+        supportFragmentManager.beginTransaction().apply {
+            replace(
                 R.id.fragment_container_authorization,
-                LoginFragment.newInstance(enteredData),
-                LoginFragment.TAG
+                fragment,
+                fragmentTag
             )
-            .addToBackStack(LoginFragment.TAG)
-            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-            .commit()
-    }
-
-    override fun moveToRegisterFragment() {
-        supportFragmentManager.beginTransaction()
-            .replace(
-                R.id.fragment_container_authorization,
-                RegisterFragment.newInstance(enteredData),
-                RegisterFragment.TAG
-            )
-            .addToBackStack(RegisterFragment.TAG)
-            .setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-            .commit()
+            addToBackStack(fragmentTag)
+            setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+            commit()
+        }
     }
 
     override fun closeActivity() {

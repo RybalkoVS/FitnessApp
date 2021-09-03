@@ -6,6 +6,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ImageView
 import androidx.core.animation.doOnEnd
+import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.R
 import com.example.fitnessapp.presentation.PreferencesStore
@@ -19,7 +20,7 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private lateinit var appLogo: ImageView
-    private var preferencesStore = PreferencesStore(context = this)
+    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -49,5 +50,4 @@ class SplashScreenActivity : AppCompatActivity() {
         val token = preferencesStore.getAuthorizationToken()
         return !token.isNullOrEmpty()
     }
-
 }

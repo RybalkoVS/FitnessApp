@@ -8,15 +8,13 @@ import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 import bolts.Task
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.login.LoginRequest
 import com.example.fitnessapp.data.model.login.LoginResponse
 import com.example.fitnessapp.data.network.ResponseStatus
-import com.example.fitnessapp.presentation.PreferencesStore
-import com.example.fitnessapp.presentation.ToastProvider
+import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
@@ -35,10 +33,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
-    private var authDataValidator = AuthorizationDataValidator()
-    private var remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private lateinit var toastProvider: ToastProvider
-    private lateinit var preferencesStore: PreferencesStore
+    private val authDataValidator = AuthorizationDataValidator()
+    private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
+    private val toastProvider = FitnessApp.INSTANCE.toastProvider
+    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
     private lateinit var loginBtn: Button
     private lateinit var moveToRegisterBtn: Button
     private lateinit var emailEditText: EditText
@@ -46,8 +44,6 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        toastProvider = ToastProvider(context = context)
-        preferencesStore = PreferencesStore(context = context)
         if (context is AuthorizationActivityCallback) {
             authorizationActivityCallback = context
         } else {
@@ -78,8 +74,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private fun checkEmptyInput() {
         if (authDataValidator.isInputEmpty(
-                emailEditText.text.toString(),
-                passwordEditText.text.toString()
+                emailEditText.getValue(),
+                passwordEditText.getValue()
             )
         ) {
             toastProvider.showErrorMessage(error = getString(R.string.empty_fields_toast))
@@ -91,8 +87,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun sendLoginRequest() {
         remoteRepository.login(
             LoginRequest(
-                email = emailEditText.text.toString(),
-                password = passwordEditText.text.toString()
+                email = emailEditText.getValue(),
+                password = passwordEditText.getValue()
             )
         ).continueWith({ task ->
             if (task.error != null) {
@@ -122,7 +118,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     private fun moveToRegistration() {
-        authorizationActivityCallback?.moveToRegisterFragment()
+        authorizationActivityCallback?.showFragment(
+            RegisterFragment.newInstance(null),
+            RegisterFragment.TAG
+        )
     }
 
     private fun restoreEnteredData(data: Bundle?) {
@@ -133,22 +132,16 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     override fun onPause() {
-        saveEnteredData()
+        saveCurrentEnteredData()
         super.onPause()
     }
 
-    private fun saveEnteredData() {
+    private fun saveCurrentEnteredData() {
         val bundle = Bundle().apply {
-            putString(EMAIL_INPUT_LOGIN, emailEditText.text.toString())
-            putString(PASSWORD_INPUT_LOGIN, passwordEditText.text.toString())
+            putString(EMAIL_INPUT_LOGIN, emailEditText.getValue())
+            putString(PASSWORD_INPUT_LOGIN, passwordEditText.getValue())
         }
         authorizationActivityCallback?.saveEnteredData(bundle)
-    }
-
-    override fun onDestroy() {
-        moveToRegisterBtn.setOnClickListener(null)
-        loginBtn.setOnClickListener(null)
-        super.onDestroy()
     }
 
     override fun onDetach() {

@@ -3,6 +3,8 @@ package com.example.fitnessapp
 import android.app.Application
 import com.example.fitnessapp.data.network.FitnessApi
 import com.example.fitnessapp.data.repository.RemoteRepository
+import com.example.fitnessapp.presentation.PreferencesStore
+import com.example.fitnessapp.presentation.ToastProvider
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
 import retrofit2.Retrofit
@@ -17,6 +19,8 @@ class FitnessApp : Application() {
 
     lateinit var fitnessApi: FitnessApi
     lateinit var remoteRepository: RemoteRepository
+    lateinit var preferencesStore: PreferencesStore
+    lateinit var toastProvider: ToastProvider
 
     override fun onCreate() {
         super.onCreate()
@@ -25,6 +29,8 @@ class FitnessApp : Application() {
 
         configureRetrofit()
         remoteRepository = RemoteRepository(fitnessApi)
+        preferencesStore = PreferencesStore(applicationContext)
+        toastProvider = ToastProvider(applicationContext)
     }
 
     private fun configureRetrofit() {

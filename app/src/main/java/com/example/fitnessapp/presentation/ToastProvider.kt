@@ -3,7 +3,7 @@ package com.example.fitnessapp.presentation
 import android.content.Context
 import android.widget.Toast
 
-class ToastProvider(private val context: Context) {
+class ToastProvider(private val context: Context?) {
 
     fun showErrorMessage(error: String) {
         Toast.makeText(

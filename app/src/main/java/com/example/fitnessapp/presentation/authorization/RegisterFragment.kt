@@ -14,8 +14,7 @@ import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.registration.RegistrationRequest
 import com.example.fitnessapp.data.model.registration.RegistrationResponse
 import com.example.fitnessapp.data.network.ResponseStatus
-import com.example.fitnessapp.presentation.PreferencesStore
-import com.example.fitnessapp.presentation.ToastProvider
+import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
@@ -37,10 +36,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
-    private var autDataValidator = AuthorizationDataValidator()
-    private var remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private lateinit var toastProvider: ToastProvider
-    private lateinit var preferencesStore: PreferencesStore
+    private val autDataValidator = AuthorizationDataValidator()
+    private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
+    private val toastProvider = FitnessApp.INSTANCE.toastProvider
+    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
     private lateinit var registerBtn: Button
     private lateinit var moveToLoginBtn: Button
     private lateinit var emailEditText: EditText
@@ -51,8 +50,6 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        preferencesStore = PreferencesStore(context = context)
-        toastProvider = ToastProvider(context = context)
         if (context is AuthorizationActivityCallback) {
             authorizationActivityCallback = context
         } else {
@@ -86,11 +83,11 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     private fun checkEmptyInput() {
         if (autDataValidator.isInputEmpty(
-                emailEditText.text.toString(),
-                firstnameEditText.text.toString(),
-                lastnameEditText.text.toString(),
-                passwordEditText.text.toString(),
-                repeatPasswordEditText.text.toString()
+                emailEditText.getValue(),
+                firstnameEditText.getValue(),
+                lastnameEditText.getValue(),
+                passwordEditText.getValue(),
+                repeatPasswordEditText.getValue()
             )
         ) {
             toastProvider.showErrorMessage(getString(R.string.empty_fields_toast))
@@ -100,10 +97,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private fun checkEnteredData() {
-        val isDataValid = autDataValidator.isEmailValid(emailEditText.text.toString())
+        val isDataValid = autDataValidator.isEmailValid(emailEditText.getValue())
                 && autDataValidator.isPasswordValid(
-            password = passwordEditText.text.toString(),
-            repeatPassword = repeatPasswordEditText.text.toString()
+            password = passwordEditText.getValue(),
+            repeatPassword = repeatPasswordEditText.getValue()
         )
         if (isDataValid) {
             sendRegisterRequest()
@@ -115,10 +112,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun sendRegisterRequest() {
         remoteRepository.register(
             registerRequest = RegistrationRequest(
-                email = emailEditText.text.toString(),
-                firstName = firstnameEditText.text.toString(),
-                lastName = lastnameEditText.text.toString(),
-                password = passwordEditText.text.toString()
+                email = emailEditText.getValue(),
+                firstName = firstnameEditText.getValue(),
+                lastName = lastnameEditText.getValue(),
+                password = passwordEditText.getValue()
             )
         ).continueWith({ task ->
             if (task.error != null) {
@@ -148,7 +145,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     }
 
     private fun moveToLogin() {
-        authorizationActivityCallback?.moveToLoginFragment()
+        authorizationActivityCallback?.showFragment(
+            LoginFragment.newInstance(null),
+            LoginFragment.TAG
+        )
     }
 
     private fun restoreEnteredData(data: Bundle?) {
@@ -161,26 +161,20 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-    private fun saveEnteredData() {
+    private fun saveCurrentEnteredData() {
         val bundle = Bundle().apply {
-            putString(EMAIL_INPUT, emailEditText.text.toString())
-            putString(FIRSTNAME_INPUT, firstnameEditText.text.toString())
-            putString(LASTNAME_INPUT, lastnameEditText.text.toString())
-            putString(PASSWORD_INPUT, passwordEditText.text.toString())
-            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.text.toString())
+            putString(EMAIL_INPUT, emailEditText.getValue())
+            putString(FIRSTNAME_INPUT, firstnameEditText.getValue())
+            putString(LASTNAME_INPUT, lastnameEditText.getValue())
+            putString(PASSWORD_INPUT, passwordEditText.getValue())
+            putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.getValue())
         }
         authorizationActivityCallback?.saveEnteredData(bundle)
     }
 
-    override fun onStop() {
-        saveEnteredData()
-        super.onStop()
-    }
-
-    override fun onDestroy() {
-        registerBtn.setOnClickListener(null)
-        moveToLoginBtn.setOnClickListener(null)
-        super.onDestroy()
+    override fun onPause() {
+        saveCurrentEnteredData()
+        super.onPause()
     }
 
     override fun onDetach() {
