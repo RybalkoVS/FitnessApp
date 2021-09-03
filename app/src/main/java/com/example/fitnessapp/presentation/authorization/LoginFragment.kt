@@ -1,6 +1,7 @@
 package com.example.fitnessapp.presentation.authorization
 
 import android.content.Context
+import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -8,8 +9,15 @@ import android.view.View
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
+import bolts.Task
+import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
+import com.example.fitnessapp.data.model.login.LoginRequest
+import com.example.fitnessapp.data.model.login.LoginResponse
+import com.example.fitnessapp.data.network.ResponseStatus
+import com.example.fitnessapp.presentation.PreferencesStore
 import com.example.fitnessapp.presentation.ToastProvider
+import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
@@ -28,7 +36,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
     private var authDataValidator = AuthorizationDataValidator()
-    private var toastProvider = ToastProvider(context = context)
+    private var remoteRepository = FitnessApp.INSTANCE.remoteRepository
+    private lateinit var toastProvider: ToastProvider
+    private lateinit var preferencesStore: PreferencesStore
     private lateinit var loginBtn: Button
     private lateinit var moveToRegisterBtn: Button
     private lateinit var emailEditText: EditText
@@ -36,6 +46,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
+        toastProvider = ToastProvider(context = context)
+        preferencesStore = PreferencesStore(context = context)
         if (context is AuthorizationActivityCallback) {
             authorizationActivityCallback = context
         } else {
@@ -77,7 +89,36 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     private fun sendLoginRequest() {
-        TODO()
+        remoteRepository.login(
+            LoginRequest(
+                email = emailEditText.text.toString(),
+                password = passwordEditText.text.toString()
+            )
+        ).continueWith({ task ->
+            if (task.error != null) {
+                toastProvider.showErrorMessage(error = task.error.message.toString())
+            } else {
+                checkEnteredData(task.result)
+            }
+        }, Task.UI_THREAD_EXECUTOR)
+    }
+
+    private fun checkEnteredData(loginResponse: LoginResponse) {
+        when (loginResponse.status) {
+            ResponseStatus.OK.toString() -> {
+                preferencesStore.saveAuthorizationToken(loginResponse.token)
+                moveToMainScreen()
+            }
+            ResponseStatus.ERROR.toString() -> {
+                toastProvider.showErrorMessage(error = loginResponse.errorCode)
+            }
+        }
+    }
+
+    private fun moveToMainScreen() {
+        val intent = Intent(context, MainActivity::class.java)
+        startActivity(intent)
+        authorizationActivityCallback?.closeActivity()
     }
 
     private fun moveToRegistration() {

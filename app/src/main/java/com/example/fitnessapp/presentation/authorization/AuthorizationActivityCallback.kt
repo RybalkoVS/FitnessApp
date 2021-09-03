@@ -7,4 +7,5 @@ interface AuthorizationActivityCallback {
     fun moveToLoginFragment()
     fun moveToRegisterFragment()
     fun saveEnteredData(data: Bundle?)
+    fun closeActivity()
 }

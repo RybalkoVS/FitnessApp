@@ -39,7 +39,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private var authorizationActivityCallback: AuthorizationActivityCallback? = null
     private var autDataValidator = AuthorizationDataValidator()
     private var remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private var toastProvider = ToastProvider(context = context)
+    private lateinit var toastProvider: ToastProvider
     private lateinit var preferencesStore: PreferencesStore
     private lateinit var registerBtn: Button
     private lateinit var moveToLoginBtn: Button
@@ -52,6 +52,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     override fun onAttach(context: Context) {
         super.onAttach(context)
         preferencesStore = PreferencesStore(context = context)
+        toastProvider = ToastProvider(context = context)
         if (context is AuthorizationActivityCallback) {
             authorizationActivityCallback = context
         } else {
@@ -107,7 +108,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         if (isDataValid) {
             sendRegisterRequest()
         } else {
-            toastProvider.showErrorMessage(error = getString(R.string.empty_fields_toast))
+            toastProvider.showErrorMessage(error = getString(R.string.incorrect_email_or_password_toast))
         }
     }
 
@@ -123,12 +124,12 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             if (task.error != null) {
                 toastProvider.showErrorMessage(error = task.error.message.toString())
             } else {
-                chekRegisterResponse(task.result)
+                checkRegisterResponse(task.result)
             }
         }, Task.UI_THREAD_EXECUTOR)
     }
 
-    private fun chekRegisterResponse(registrationResponse: RegistrationResponse) {
+    private fun checkRegisterResponse(registrationResponse: RegistrationResponse) {
         when (registrationResponse.status) {
             ResponseStatus.OK.toString() -> {
                 preferencesStore.saveAuthorizationToken(registrationResponse.token)
@@ -143,6 +144,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun moveToMainScreen() {
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
+        authorizationActivityCallback?.closeActivity()
     }
 
     private fun moveToLogin() {

@@ -11,7 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 class FitnessApp : Application() {
 
     companion object {
-        const val BASE_URL = "http://pub.zame-dev.org/senla-training-addition/"
+        const val BASE_URL = "https://pub.zame-dev.org/senla-training-addition/"
         lateinit var INSTANCE: FitnessApp
     }
 

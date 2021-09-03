@@ -6,7 +6,7 @@ import com.google.gson.annotations.SerializedName
 data class RegistrationRequest(
     @SerializedName("email")
     val email: String,
-    @SerializedName("fistName")
+    @SerializedName("firstName")
     val firstName: String,
     @SerializedName("lastName")
     val lastName: String,

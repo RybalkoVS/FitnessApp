@@ -65,6 +65,10 @@ class AuthorizationActivity : AppCompatActivity(), AuthorizationActivityCallback
             .commit()
     }
 
+    override fun closeActivity() {
+        finish()
+    }
+
     override fun saveEnteredData(data: Bundle?) {
         enteredData = data
     }
