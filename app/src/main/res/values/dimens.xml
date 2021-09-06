@@ -6,4 +6,7 @@
 
     <!--text size    -->
     <dimen name="big_text_size">32sp</dimen>
+
+    <!--nav drawer    -->
+    <dimen name="nav_drawer_width">240dp</dimen>
 </resources>

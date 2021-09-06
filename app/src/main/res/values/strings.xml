@@ -15,5 +15,13 @@
     <string name="empty_fields_toast">Fill all fields!</string>
     <string name="incorrect_email_or_password_toast">Incorrect email or password</string>
 
+    <!--nav drawer    -->
+    <string name="drawer_open">drawer open</string>
+    <string name="drawer_close">drawer close</string>
+    <string name="main">Main</string>
+    <string name="notifications">Notifications</string>
+    <string name="logout">Log out</string>
+
+
 
 </resources>

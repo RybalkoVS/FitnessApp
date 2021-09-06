@@ -8,8 +8,8 @@ class AuthorizationDataValidator {
 
     fun isInputEmpty(vararg input: String): Boolean {
         var emptyInput = false
-        for(field in input){
-            if(field.isEmpty()){
+        for (field in input) {
+            if (field.isEmpty()) {
                 emptyInput = true
                 break
             }
