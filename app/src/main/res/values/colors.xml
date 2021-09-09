@@ -9,8 +9,11 @@
     <color name="white">#FFFFFFFF</color>
 
     <!--common in app   -->
-    <color name="main_color">#003371</color>
+    <color name="main_color">#004395</color>
 
-    <!--    -->
+    <!--text    -->
+    <color name="main_text_color">@color/black</color>
+    <color name="secondary_text_color">@color/white</color>
+
 
 </resources>

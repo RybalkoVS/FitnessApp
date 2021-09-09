@@ -15,6 +15,7 @@ import com.example.fitnessapp.data.model.login.LoginRequest
 import com.example.fitnessapp.data.model.login.LoginResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
+import com.example.fitnessapp.presentation.FragmentContainerActivity
 import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
@@ -22,17 +23,14 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     companion object {
         const val TAG = "LOGIN_FRAGMENT"
-        const val EMAIL_INPUT_LOGIN = "EMAIL_INPUT_LOGIN"
-        const val PASSWORD_INPUT_LOGIN = "PASSWORD_INPUT_LOGIN"
+        const val EMAIL_INPUT = "EMAIL_INPUT_LOGIN"
+        const val PASSWORD_INPUT = "PASSWORD_INPUT_LOGIN"
+        private const val SAVED_STATE = "SAVED_STATE"
 
-        fun newInstance(args: Bundle?): LoginFragment {
-            val fragment = LoginFragment()
-            fragment.arguments = args
-            return fragment
-        }
+        fun newInstance() = LoginFragment()
     }
 
-    private var authorizationActivityCallback: AuthorizationActivityCallback? = null
+    private var fragmentContainerActivity: FragmentContainerActivity? = null
     private val authDataValidator = AuthorizationDataValidator()
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
@@ -44,8 +42,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is AuthorizationActivityCallback) {
-            authorizationActivityCallback = context
+        if (context is FragmentContainerActivity) {
+            fragmentContainerActivity = context
         } else {
             throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
@@ -62,7 +60,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         moveToRegisterBtn.setOnClickListener {
             moveToRegistration()
         }
-        restoreEnteredData(this.arguments)
+        if (savedInstanceState != null) {
+            restoreEnteredData(savedInstanceState)
+        }
     }
 
     private fun initViews(v: View) {
@@ -114,38 +114,35 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun moveToMainScreen() {
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
-        authorizationActivityCallback?.closeActivity()
+        fragmentContainerActivity?.closeActivity()
     }
 
     private fun moveToRegistration() {
-        authorizationActivityCallback?.showFragment(
-            RegisterFragment.newInstance(null),
-            RegisterFragment.TAG
-        )
+        fragmentContainerActivity?.showFragment(RegisterFragment.TAG)
     }
 
     private fun restoreEnteredData(data: Bundle?) {
         data?.let {
-            emailEditText.setText(it.getString(EMAIL_INPUT_LOGIN))
-            passwordEditText.setText(it.getString(PASSWORD_INPUT_LOGIN))
+            emailEditText.setText(it.getString(EMAIL_INPUT))
+            passwordEditText.setText(it.getString(PASSWORD_INPUT))
         }
     }
 
     override fun onPause() {
-        saveCurrentEnteredData()
         super.onPause()
+        arguments?.apply {
+            putString(EMAIL_INPUT, emailEditText.getValue())
+            putString(PASSWORD_INPUT, passwordEditText.getValue())
+        }
     }
 
-    private fun saveCurrentEnteredData() {
-        val bundle = Bundle().apply {
-            putString(EMAIL_INPUT_LOGIN, emailEditText.getValue())
-            putString(PASSWORD_INPUT_LOGIN, passwordEditText.getValue())
-        }
-        authorizationActivityCallback?.saveEnteredData(bundle)
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBundle(SAVED_STATE, arguments)
     }
 
     override fun onDetach() {
-        authorizationActivityCallback = null
+        fragmentContainerActivity = null
         super.onDetach()
     }
 

@@ -6,7 +6,17 @@
 
     <!--text size    -->
     <dimen name="big_text_size">32sp</dimen>
+    <dimen name="small_text_size">18sp</dimen>
 
     <!--nav drawer    -->
     <dimen name="nav_drawer_width">240dp</dimen>
+
+    <!--fab   -->
+    <dimen name="fav_default_margin">16dp</dimen>
+
+
+    <!--track list item    -->
+    <dimen name="track_item_height">96dp</dimen>
+    <dimen name="margin_between_text">4dp</dimen>
+    <dimen name="margin_between_items">4dp</dimen>
 </resources>

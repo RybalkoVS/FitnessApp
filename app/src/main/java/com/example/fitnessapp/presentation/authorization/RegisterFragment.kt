@@ -15,6 +15,7 @@ import com.example.fitnessapp.data.model.registration.RegistrationRequest
 import com.example.fitnessapp.data.model.registration.RegistrationResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
+import com.example.fitnessapp.presentation.FragmentContainerActivity
 import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
@@ -27,15 +28,13 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         const val LASTNAME_INPUT = "LASTNAME_INPUT"
         const val PASSWORD_INPUT = "PASSWORD_INPUT"
         const val REPEAT_PASSWORD_INPUT = "REPEAT_PASSWORD_INPUT"
+        private const val SAVED_STATE = "SAVED_STATE"
 
-        fun newInstance(args: Bundle?): RegisterFragment {
-            val fragment = RegisterFragment()
-            fragment.arguments = args
-            return fragment
-        }
+        fun newInstance() = RegisterFragment()
     }
 
-    private var authorizationActivityCallback: AuthorizationActivityCallback? = null
+
+    private var fragmentContainerActivity: FragmentContainerActivity? = null
     private val autDataValidator = AuthorizationDataValidator()
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
@@ -50,8 +49,8 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is AuthorizationActivityCallback) {
-            authorizationActivityCallback = context
+        if (context is FragmentContainerActivity) {
+            fragmentContainerActivity = context
         } else {
             throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
@@ -68,7 +67,9 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         moveToLoginBtn.setOnClickListener {
             moveToLogin()
         }
-        restoreEnteredData(this.arguments)
+        if (savedInstanceState != null) {
+            restoreEnteredData(savedInstanceState)
+        }
     }
 
     private fun initViews(v: View) {
@@ -141,14 +142,11 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun moveToMainScreen() {
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
-        authorizationActivityCallback?.closeActivity()
+        fragmentContainerActivity?.closeActivity()
     }
 
     private fun moveToLogin() {
-        authorizationActivityCallback?.showFragment(
-            LoginFragment.newInstance(null),
-            LoginFragment.TAG
-        )
+        fragmentContainerActivity?.showFragment(LoginFragment.TAG)
     }
 
     private fun restoreEnteredData(data: Bundle?) {
@@ -161,24 +159,24 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-    private fun saveCurrentEnteredData() {
-        val bundle = Bundle().apply {
+    override fun onPause() {
+        super.onPause()
+        arguments?.apply {
             putString(EMAIL_INPUT, emailEditText.getValue())
             putString(FIRSTNAME_INPUT, firstnameEditText.getValue())
             putString(LASTNAME_INPUT, lastnameEditText.getValue())
             putString(PASSWORD_INPUT, passwordEditText.getValue())
             putString(REPEAT_PASSWORD_INPUT, repeatPasswordEditText.getValue())
         }
-        authorizationActivityCallback?.saveEnteredData(bundle)
     }
 
-    override fun onPause() {
-        saveCurrentEnteredData()
-        super.onPause()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBundle(SAVED_STATE, arguments)
     }
 
     override fun onDetach() {
-        authorizationActivityCallback = null
+        fragmentContainerActivity = null
         super.onDetach()
     }
 

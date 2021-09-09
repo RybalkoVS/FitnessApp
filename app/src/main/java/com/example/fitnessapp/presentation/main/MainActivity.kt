@@ -11,19 +11,20 @@ import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.FragmentManager
 import androidx.fragment.app.FragmentTransaction
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
-import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
-import com.example.fitnessapp.presentation.notification.NotificationsFragment
+import com.example.fitnessapp.presentation.FragmentContainerActivity
+import com.example.fitnessapp.presentation.main.notification.NotificationsFragment
+import com.example.fitnessapp.presentation.main.track.TrackFragment
+import com.example.fitnessapp.presentation.main.track.TrackListFragment
 import com.google.android.material.navigation.NavigationView
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : AppCompatActivity(), FragmentContainerActivity {
 
     companion object {
-        const val CURRENT_FRAGMENT = "CURRENT_FRAGMENT"
-        const val MIN_BACK_STACK_SIZE = 1
+        private const val CURRENT_FRAGMENT = "CURRENT_FRAGMENT"
+        private const val MIN_BACK_STACK_SIZE = 1
     }
 
     private lateinit var drawerLayout: DrawerLayout
@@ -31,7 +32,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private lateinit var logoutBtn: Button
     private lateinit var navigationView: NavigationView
-    private var currentFragmentTag: String? = null
     private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,16 +44,14 @@ class MainActivity : AppCompatActivity() {
         logoutBtn.setOnClickListener {
             onLogout()
         }
-
         navigationView.setNavigationItemSelectedListener(setupNavigationListener())
 
         if (savedInstanceState != null) {
-            currentFragmentTag = savedInstanceState.getString(CURRENT_FRAGMENT)
-            currentFragmentTag?.let {
-                restoreFragmentState(it)
+            savedInstanceState.getString(CURRENT_FRAGMENT)?.let {
+                showFragment(it)
             }
         } else {
-            showFragment(MainFragment.TAG, MainFragment.newInstance())
+            showFragment(TrackListFragment.TAG)
         }
     }
 
@@ -81,7 +79,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun moveToAuthorization() {
-        val intent = Intent(this, AuthorizationActivity::class.java)
+        val intent = Intent(this, FragmentContainerActivity::class.java)
         startActivity(intent)
         finish()
     }
@@ -90,12 +88,12 @@ class MainActivity : AppCompatActivity() {
         NavigationView.OnNavigationItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
                 R.id.menu_item_main -> {
-                    supportFragmentManager.popBackStack(MainFragment.TAG, 0)
+                    showFragment(TrackListFragment.TAG)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
                 R.id.menu_item_notifications -> {
-                    showFragment(NotificationsFragment.TAG, NotificationsFragment.newInstance())
+                    showFragment(NotificationsFragment.TAG)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
@@ -105,31 +103,45 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-    private fun restoreFragmentState(fragmentTag: String) {
-        when (fragmentTag) {
-            MainFragment.TAG -> {
-                showFragment(MainFragment.TAG, MainFragment.newInstance())
+    override fun showFragment(fragmentTag: String, args: Bundle?) {
+        var fragment = supportFragmentManager.findFragmentByTag(fragmentTag)
+        if (fragment != null) {
+            supportFragmentManager.popBackStack(fragmentTag, 0)
+        } else {
+            fragment = getFragmentByTag(fragmentTag, args)
+            supportFragmentManager.beginTransaction().apply {
+                replace(
+                    R.id.fragment_container_main,
+                    fragment,
+                    fragmentTag
+                )
+                addToBackStack(fragment.tag)
+                setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
+                commit()
             }
+        }
+    }
+
+    override fun getFragmentByTag(fragmentTag: String, args: Bundle?): Fragment {
+        return when (fragmentTag) {
             NotificationsFragment.TAG -> {
-                showFragment(NotificationsFragment.TAG, NotificationsFragment.newInstance())
+                NotificationsFragment.newInstance()
+            }
+            TrackFragment.TAG -> {
+                TrackFragment.newInstance(args)
+            }
+            else -> {
+                TrackListFragment.newInstance()
             }
         }
     }
 
-    private fun showFragment(fragmentTag: String, fragment: Fragment) {
-        supportFragmentManager.popBackStack(fragmentTag, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-        supportFragmentManager.beginTransaction().apply {
-            replace(
-                R.id.fragment_container_main,
-                fragment,
-                fragmentTag
-            )
-            addToBackStack(fragmentTag)
-            setTransition(FragmentTransaction.TRANSIT_FRAGMENT_FADE)
-            commit()
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        supportFragmentManager.findFragmentById(R.id.fragment_container_main)?.let {
+            outState.putString(CURRENT_FRAGMENT, it.tag)
         }
     }
-
 
     override fun onPostCreate(savedInstanceState: Bundle?) {
         super.onPostCreate(savedInstanceState)
@@ -153,9 +165,13 @@ class MainActivity : AppCompatActivity() {
             drawerLayout.closeDrawer(GravityCompat.START);
             return
         }
-        if(supportFragmentManager.backStackEntryCount == MIN_BACK_STACK_SIZE){
+        if (supportFragmentManager.backStackEntryCount == MIN_BACK_STACK_SIZE) {
             finish()
         }
         super.onBackPressed()
+    }
+
+    override fun closeActivity() {
+        finish()
     }
 }
