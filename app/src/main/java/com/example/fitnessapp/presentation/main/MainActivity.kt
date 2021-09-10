@@ -14,13 +14,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
-import com.example.fitnessapp.presentation.FragmentContainerActivity
+import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
+import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
 import com.example.fitnessapp.presentation.main.notification.NotificationsFragment
 import com.example.fitnessapp.presentation.main.track.TrackFragment
 import com.example.fitnessapp.presentation.main.track.TrackListFragment
 import com.google.android.material.navigation.NavigationView
 
-class MainActivity : AppCompatActivity(), FragmentContainerActivity {
+class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
 
     companion object {
         private const val CURRENT_FRAGMENT = "CURRENT_FRAGMENT"
@@ -79,7 +80,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivity {
     }
 
     private fun moveToAuthorization() {
-        val intent = Intent(this, FragmentContainerActivity::class.java)
+        val intent = Intent(this, AuthorizationActivity::class.java)
         startActivity(intent)
         finish()
     }

@@ -5,9 +5,9 @@ import android.os.Bundle
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
 import com.example.fitnessapp.R
-import com.example.fitnessapp.presentation.FragmentContainerActivity
+import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 
-class AuthorizationActivity : AppCompatActivity(), FragmentContainerActivity {
+class AuthorizationActivity : AppCompatActivity(), FragmentContainerActivityCallback {
 
     companion object {
         const val CURRENT_FRAGMENT = "CURRENT_FRAGMENT"

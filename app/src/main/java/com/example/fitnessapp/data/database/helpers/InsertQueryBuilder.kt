@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 class InsertQueryBuilder {
 
     companion object {
-        private const val INSERT_INTO = "INSERT"
+        private const val INSERT_INTO = "INSERT INTO"
         private const val VALUES = "VALUES"
         private const val EMPTY_STRING = ""
         private const val ERROR_MESSAGE = "Incorrect data"

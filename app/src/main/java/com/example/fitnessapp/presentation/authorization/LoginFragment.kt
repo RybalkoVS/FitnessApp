@@ -15,7 +15,7 @@ import com.example.fitnessapp.data.model.login.LoginRequest
 import com.example.fitnessapp.data.model.login.LoginResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
-import com.example.fitnessapp.presentation.FragmentContainerActivity
+import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.main.MainActivity
 import java.lang.RuntimeException
 
@@ -30,7 +30,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         fun newInstance() = LoginFragment()
     }
 
-    private var fragmentContainerActivity: FragmentContainerActivity? = null
+    private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private val authDataValidator = AuthorizationDataValidator()
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
@@ -42,8 +42,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivity) {
-            fragmentContainerActivity = context
+        if (context is FragmentContainerActivityCallback) {
+            fragmentContainerActivityCallback = context
         } else {
             throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
@@ -114,11 +114,11 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun moveToMainScreen() {
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
-        fragmentContainerActivity?.closeActivity()
+        fragmentContainerActivityCallback?.closeActivity()
     }
 
     private fun moveToRegistration() {
-        fragmentContainerActivity?.showFragment(RegisterFragment.TAG)
+        fragmentContainerActivityCallback?.showFragment(RegisterFragment.TAG)
     }
 
     private fun restoreEnteredData(data: Bundle?) {
@@ -142,7 +142,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     }
 
     override fun onDetach() {
-        fragmentContainerActivity = null
+        fragmentContainerActivityCallback = null
         super.onDetach()
     }
 

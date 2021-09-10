@@ -4,7 +4,6 @@ import android.content.Context
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
-import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -16,9 +15,8 @@ import com.example.fitnessapp.data.model.track.Track
 import com.example.fitnessapp.data.model.track.TrackRequest
 import com.example.fitnessapp.data.model.track.TrackResponse
 import com.example.fitnessapp.data.network.ResponseStatus
-import com.example.fitnessapp.presentation.FragmentContainerActivity
+import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.toBoolean
-import okhttp3.Response
 import java.lang.RuntimeException
 
 
@@ -27,7 +25,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     companion object {
         const val TAG = "TRACK_LIST_FRAGMENT"
-        private const val DEFAULT_ADAPTER_START_POSITION = 0
+        private const val ADAPTER_START_POSITION = 0
+        private const val REFRESHING_FLAG = "REFRESHING"
+        private const val SCROLL_POSITION = "SCROLL_POSITION"
+        private const val TRACKS_COUNT = ""
 
         fun newInstance() = TrackListFragment().apply {
             val bundle = Bundle()
@@ -35,20 +36,23 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         }
     }
 
-    private var fragmentContainerActivity: FragmentContainerActivity? = null
+    private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private lateinit var trackListRecyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private var tracks = mutableListOf<Track>()
+    private val trackListAdapter = TrackListAdapter(tracks, this)
     private val localRepository = FitnessApp.INSTANCE.localRepository
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
     private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private var isRefreshing = false
+    private var scrollPosition: Int = 0
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivity) {
-            fragmentContainerActivity = context
+        if (context is FragmentContainerActivityCallback) {
+            fragmentContainerActivityCallback = context
         } else {
             throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
@@ -57,19 +61,31 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
-        getTracksFromDb()
-
         swipeRefreshLayout.setOnRefreshListener {
-            //TODO()
+            onSwipeRefresh()
         }
+        trackListRecyclerView.addOnScrollListener(createOnScrollChangeListener())
+
+        if (arguments != null) {
+            scrollPosition = arguments!!.getInt(SCROLL_POSITION)
+        }
+        getTracksFromDb()
     }
 
     private fun initViews(v: View) {
         trackListRecyclerView = v.findViewById(R.id.recycler_view_track_list)
-        trackListRecyclerView.adapter = TrackListAdapter(tracks, this)
+        trackListRecyclerView.adapter = trackListAdapter
         trackListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         progressBar = v.findViewById(R.id.progress_bar)
         swipeRefreshLayout = v.findViewById(R.id.swipe_refresh_layout)
+    }
+
+    private fun createOnScrollChangeListener() = object : RecyclerView.OnScrollListener() {
+        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+            super.onScrolled(recyclerView, dx, dy)
+            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
+            scrollPosition = layoutManager.findFirstVisibleItemPosition()
+        }
     }
 
     private fun getTracksFromDb() {
@@ -80,9 +96,11 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             } else {
                 tracks.addAll(task.result)
                 tracks.sortByDescending { it.beginTime }
-                trackListRecyclerView.adapter?.notifyItemRangeInserted(
-                    DEFAULT_ADAPTER_START_POSITION, tracks.size
+                trackListAdapter.notifyItemRangeInserted(
+                    ADAPTER_START_POSITION, tracks.size
                 )
+                trackListRecyclerView.scrollToPosition(scrollPosition)
+                hideProgress()
                 checkTracks(tracks)
             }
         }, Task.UI_THREAD_EXECUTOR)
@@ -92,12 +110,12 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         if (tracks.isNullOrEmpty()) {
             getTracksFromServer()
         } else {
-            hideProgress()
             synchronizeDataWithServer()
         }
     }
 
     private fun getTracksFromServer() {
+        showProgress()
         remoteRepository.getTracks(
             TrackRequest(token = preferencesStore.getAuthorizationToken())
         ).continueWith({ task ->
@@ -114,9 +132,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             ResponseStatus.OK.toString() -> {
                 tracks.addAll(trackResponse.trackList)
                 tracks.sortByDescending { it.beginTime }
-                trackListRecyclerView.adapter?.notifyItemRangeInserted(
-                    DEFAULT_ADAPTER_START_POSITION, tracks.size
+                trackListAdapter.notifyItemRangeInserted(
+                    ADAPTER_START_POSITION, tracks.size
                 )
+                trackListRecyclerView.scrollToPosition(scrollPosition)
                 hideProgress()
                 saveTracksInDb(tracks)
             }
@@ -140,7 +159,6 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         }
     }
 
-    //not finished
     private fun synchronizeDataWithServer() {
         for (track in tracks) {
             if (track.isNotSent.toBoolean()) {
@@ -153,15 +171,34 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         //TODO
     }
 
+    private fun onSwipeRefresh() {
+        swipeRefreshLayout.isRefreshing = true
+        synchronizeDataWithServer()
+    }
+
     override fun onItemClick(track: Track) {
         val arguments = Bundle().apply {
             putParcelable(TrackFragment.TRACK_ITEM, track)
         }
-        fragmentContainerActivity?.showFragment(fragmentTag = TrackFragment.TAG, args = arguments)
+        fragmentContainerActivityCallback?.showFragment(
+            fragmentTag = TrackFragment.TAG,
+            args = arguments
+        )
+    }
+
+    override fun onPause() {
+        super.onPause()
+        tracks.clear()
+        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
+        arguments?.apply {
+            putBoolean(REFRESHING_FLAG, isRefreshing)
+            putInt(SCROLL_POSITION, scrollPosition)
+            putInt(TRACKS_COUNT, tracks.size)
+        }
     }
 
     override fun onDetach() {
-        fragmentContainerActivity = null
+        fragmentContainerActivityCallback = null
         super.onDetach()
     }
 

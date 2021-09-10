@@ -9,7 +9,6 @@ import androidx.core.animation.doOnEnd
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.R
-import com.example.fitnessapp.presentation.FragmentContainerActivity
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
 
 class SplashScreenActivity : AppCompatActivity() {
