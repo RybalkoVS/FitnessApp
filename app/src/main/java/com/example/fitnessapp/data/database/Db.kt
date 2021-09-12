@@ -16,15 +16,15 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
             "INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
         private const val INTEGER = "INTEGER"
         private const val INTEGER_NOT_NULL = "INTEGER NOT NULL"
+        private const val INTEGER_UNIQUE = "INTEGER UNIQUE"
         private const val LONG_NOT_NULL = "LONG NOT NULL"
-        private const val TEXT_NOT_NULL = "TEXT NOT NULL"
         private const val REAL_NOT_NULL = "REAL NOT NULL"
-        const val TRACK_SERVER_ID = "server_id"
+        const val TRACK_SERVER_ID = "serverId"
+        const val TRACK_ID = "trackId"
         const val DB_ID = "id"
         const val BEGIN_TIME = "beginTime"
         const val DURATION = "duration"
         const val DISTANCE = "distance"
-        const val IS_TRACK_SENT = "is_send"
         const val LATITUDE = "lat"
         const val LONGITUDE = "lng"
 
@@ -39,11 +39,10 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
         TableBuilder().apply {
             setName(TRACK_TABLE_NAME)
             addField(fieldName = DB_ID, type = INTEGER_NOT_NULL_PRIMARY_KEY_AUTOINCREMENT)
-            addField(fieldName = TRACK_SERVER_ID, type = INTEGER)
+            addField(fieldName = TRACK_SERVER_ID, type = INTEGER_UNIQUE)
             addField(fieldName = BEGIN_TIME, type = LONG_NOT_NULL)
             addField(fieldName = DURATION, type = LONG_NOT_NULL)
             addField(fieldName = DISTANCE, type = INTEGER_NOT_NULL)
-            addField(fieldName = IS_TRACK_SENT, type = INTEGER_NOT_NULL)
             build(db)
         }
     }
@@ -52,7 +51,7 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
         TableBuilder().apply {
             setName(POINT_TABLE_NAME)
             addField(fieldName = DB_ID, type = INTEGER_NOT_NULL_PRIMARY_KEY_AUTOINCREMENT)
-            addField(fieldName = TRACK_SERVER_ID, type = INTEGER)
+            addField(fieldName = TRACK_ID, type = INTEGER)
             addField(fieldName = LATITUDE, type = REAL_NOT_NULL)
             addField(fieldName = LONGITUDE, type = REAL_NOT_NULL)
             build(db)

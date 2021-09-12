@@ -6,7 +6,7 @@ data class TrackResponse(
     @SerializedName("status")
     val status: String,
     @SerializedName("tracks")
-    val trackList: MutableList<Track>,
+    val trackList: MutableList<TrackDto>,
     @SerializedName("code")
     val errorCode: String
 )

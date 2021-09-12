@@ -6,6 +6,8 @@ import com.example.fitnessapp.data.model.point.PointRequest
 import com.example.fitnessapp.data.model.point.PointResponse
 import com.example.fitnessapp.data.model.registration.RegistrationRequest
 import com.example.fitnessapp.data.model.registration.RegistrationResponse
+import com.example.fitnessapp.data.model.track.SaveTrackRequest
+import com.example.fitnessapp.data.model.track.SaveTrackResponse
 import com.example.fitnessapp.data.model.track.TrackRequest
 import com.example.fitnessapp.data.model.track.TrackResponse
 import retrofit2.Call
@@ -25,4 +27,8 @@ interface FitnessApi {
 
     @POST("lesson-26.php?method=points")
     fun getTrackPoints(@Body pointRequest: PointRequest): Call<PointResponse>
+
+    @POST("lesson-26.php?method=save")
+    fun saveTrack(@Body saveTrackRequest: SaveTrackRequest): Call<SaveTrackResponse>
+
 }

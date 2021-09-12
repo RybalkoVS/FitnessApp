@@ -4,10 +4,10 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Paint
 import android.os.Bundle
-import androidx.fragment.app.Fragment
 import android.view.View
 import android.widget.Button
 import android.widget.EditText
+import androidx.fragment.app.Fragment
 import bolts.Task
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
@@ -17,7 +17,6 @@ import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.main.MainActivity
-import java.lang.RuntimeException
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -27,7 +26,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         const val PASSWORD_INPUT = "PASSWORD_INPUT_LOGIN"
         private const val SAVED_STATE = "SAVED_STATE"
 
-        fun newInstance() = LoginFragment()
+        fun newInstance() = LoginFragment().apply {
+            arguments = Bundle()
+        }
     }
 
     private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
@@ -60,8 +61,9 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         moveToRegisterBtn.setOnClickListener {
             moveToRegistration()
         }
-        if (savedInstanceState != null) {
-            restoreEnteredData(savedInstanceState)
+        savedInstanceState?.let {
+            arguments = it.getBundle(SAVED_STATE)
+            restoreEnteredData(arguments)
         }
     }
 

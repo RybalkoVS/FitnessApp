@@ -7,6 +7,8 @@ import com.example.fitnessapp.data.model.point.PointRequest
 import com.example.fitnessapp.data.model.point.PointResponse
 import com.example.fitnessapp.data.model.registration.RegistrationRequest
 import com.example.fitnessapp.data.model.registration.RegistrationResponse
+import com.example.fitnessapp.data.model.track.SaveTrackRequest
+import com.example.fitnessapp.data.model.track.SaveTrackResponse
 import com.example.fitnessapp.data.model.track.TrackRequest
 import com.example.fitnessapp.data.model.track.TrackResponse
 import com.example.fitnessapp.data.network.FitnessApi
@@ -34,6 +36,12 @@ class RemoteRepository(private val fitnessApi: FitnessApi) {
     fun getTrackPoints(pointRequest: PointRequest): Task<PointResponse> {
         return Task.callInBackground {
             fitnessApi.getTrackPoints(pointRequest = pointRequest).execute().body()
+        }
+    }
+
+    fun saveTrack(saveTrackRequest: SaveTrackRequest): Task<SaveTrackResponse> {
+        return Task.callInBackground {
+            fitnessApi.saveTrack(saveTrackRequest).execute().body()
         }
     }
 

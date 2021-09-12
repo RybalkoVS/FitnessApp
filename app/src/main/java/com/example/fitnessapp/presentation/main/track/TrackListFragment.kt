@@ -1,6 +1,7 @@
 package com.example.fitnessapp.presentation.main.track
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.view.View
 import android.widget.ProgressBar
@@ -11,13 +12,16 @@ import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import bolts.Task
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
-import com.example.fitnessapp.data.model.track.Track
-import com.example.fitnessapp.data.model.track.TrackRequest
-import com.example.fitnessapp.data.model.track.TrackResponse
+import com.example.fitnessapp.data.model.point.PointDbo
+import com.example.fitnessapp.data.model.point.PointDto
+import com.example.fitnessapp.data.model.point.PointRequest
+import com.example.fitnessapp.data.model.point.PointResponse
+import com.example.fitnessapp.data.model.track.*
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
-import com.example.fitnessapp.toBoolean
-import java.lang.RuntimeException
+import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
+import com.example.fitnessapp.presentation.run.RunActivity
+import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
 class TrackListFragment : Fragment(R.layout.fragment_track_list),
@@ -27,12 +31,13 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         const val TAG = "TRACK_LIST_FRAGMENT"
         private const val ADAPTER_START_POSITION = 0
         private const val REFRESHING_FLAG = "REFRESHING"
+        private const val DATA_FETCHING_FLAG = "DATA_FETCHING"
         private const val SCROLL_POSITION = "SCROLL_POSITION"
-        private const val TRACKS_COUNT = ""
+        private const val INVALID_TOKEN_ERROR = "INVALID_TOKEN"
+        private const val SAVED_STATE = "SAVED_STATE"
 
         fun newInstance() = TrackListFragment().apply {
-            val bundle = Bundle()
-            arguments = bundle
+            arguments = Bundle()
         }
     }
 
@@ -40,14 +45,17 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private lateinit var trackListRecyclerView: RecyclerView
     private lateinit var progressBar: ProgressBar
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
-    private var tracks = mutableListOf<Track>()
+    private lateinit var fabAddTrack: FloatingActionButton
+    private var tracks = mutableListOf<TrackDbo>()
+    private var points = mutableListOf<PointDbo>()
     private val trackListAdapter = TrackListAdapter(tracks, this)
     private val localRepository = FitnessApp.INSTANCE.localRepository
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
     private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
-    private var isRefreshing = false
-    private var scrollPosition: Int = 0
+    private var scrollPosition: Int = ADAPTER_START_POSITION
+    private var isSynchronizing: Boolean = false
+    private var isDataFetched: Boolean = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -61,15 +69,20 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
+
+        savedInstanceState?.let {
+            arguments = it.getBundle(SAVED_STATE)
+            restoreState(arguments)
+        }
+        getTracksFromDb()
+
         swipeRefreshLayout.setOnRefreshListener {
             onSwipeRefresh()
         }
-        trackListRecyclerView.addOnScrollListener(createOnScrollChangeListener())
-
-        if (arguments != null) {
-            scrollPosition = arguments!!.getInt(SCROLL_POSITION)
+        fabAddTrack.setOnClickListener {
+            onAddTrack()
         }
-        getTracksFromDb()
+
     }
 
     private fun initViews(v: View) {
@@ -78,44 +91,47 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         trackListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
         progressBar = v.findViewById(R.id.progress_bar)
         swipeRefreshLayout = v.findViewById(R.id.swipe_refresh_layout)
+        fabAddTrack = v.findViewById(R.id.fab_add_track)
     }
 
-    private fun createOnScrollChangeListener() = object : RecyclerView.OnScrollListener() {
-        override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
-            super.onScrolled(recyclerView, dx, dy)
-            val layoutManager = recyclerView.layoutManager as LinearLayoutManager
-            scrollPosition = layoutManager.findFirstVisibleItemPosition()
+    private fun restoreState(bundle: Bundle?) {
+        bundle?.let {
+            swipeRefreshLayout.isRefreshing = it.getBoolean(REFRESHING_FLAG)
+            isDataFetched = it.getBoolean(DATA_FETCHING_FLAG)
+            scrollPosition = it.getInt(SCROLL_POSITION)
+        }
+        if (swipeRefreshLayout.isRefreshing) {
+            synchronizeDataWithServer()
         }
     }
 
     private fun getTracksFromDb() {
-        showProgress()
         localRepository.getTracks().continueWith({ task ->
             if (task.error != null) {
                 toastProvider.showErrorMessage(error = task.error.message.toString())
             } else {
+                tracks.clear()
                 tracks.addAll(task.result)
                 tracks.sortByDescending { it.beginTime }
-                trackListAdapter.notifyItemRangeInserted(
-                    ADAPTER_START_POSITION, tracks.size
-                )
+                trackListAdapter.notifyItemRangeInserted(ADAPTER_START_POSITION, tracks.size)
                 trackListRecyclerView.scrollToPosition(scrollPosition)
-                hideProgress()
                 checkTracks(tracks)
             }
         }, Task.UI_THREAD_EXECUTOR)
     }
 
-    private fun checkTracks(tracks: List<Track>) {
-        if (tracks.isNullOrEmpty()) {
+    private fun checkTracks(trackList: List<TrackDbo>) {
+        if (trackList.isNullOrEmpty() && !isDataFetched) {
             getTracksFromServer()
-        } else {
+        } else if (trackList.isNotEmpty() && !isDataFetched) {
             synchronizeDataWithServer()
         }
     }
 
     private fun getTracksFromServer() {
-        showProgress()
+        if (!isSynchronizing) {
+            showProgress()
+        }
         remoteRepository.getTracks(
             TrackRequest(token = preferencesStore.getAuthorizationToken())
         ).continueWith({ task ->
@@ -130,19 +146,127 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun handleTracksServerResponse(trackResponse: TrackResponse) {
         when (trackResponse.status) {
             ResponseStatus.OK.toString() -> {
-                tracks.addAll(trackResponse.trackList)
-                tracks.sortByDescending { it.beginTime }
-                trackListAdapter.notifyItemRangeInserted(
-                    ADAPTER_START_POSITION, tracks.size
-                )
-                trackListRecyclerView.scrollToPosition(scrollPosition)
-                hideProgress()
-                saveTracksInDb(tracks)
+                if (trackResponse.trackList.size > tracks.size) {
+                    saveTracksInDb(trackResponse.trackList)
+                }
+                isDataFetched = true
+                swipeRefreshLayout.isRefreshing = false
             }
             ResponseStatus.ERROR.toString() -> {
-                toastProvider.showErrorMessage(error = trackResponse.errorCode)
+                checkResponseError(trackResponse.errorCode)
             }
         }
+        hideProgress()
+    }
+
+    private fun saveTracksInDb(trackList: List<TrackDto>) {
+        localRepository.insertTrackList(trackList).onSuccess {
+            getTracksFromDb()
+        }
+        for (track in trackList) {
+            getTrackPointsFromServer(track.serverId)
+        }
+    }
+
+    private fun getTrackPointsFromServer(trackServerId: Int) {
+        remoteRepository.getTrackPoints(
+            PointRequest(
+                token = preferencesStore.getAuthorizationToken(),
+                trackId = trackServerId
+            )
+        ).continueWith { task ->
+            if (task.error != null) {
+                toastProvider.showErrorMessage(error = task.error.message.toString())
+            } else {
+                handlePointsRequest(task.result, trackServerId)
+            }
+        }
+    }
+
+    private fun handlePointsRequest(pointResponse: PointResponse, trackServerId: Int) {
+        when (pointResponse.status) {
+            ResponseStatus.OK.toString() -> {
+                savePoints(pointResponse.pointList, trackServerId)
+            }
+            ResponseStatus.ERROR.toString() -> {
+                checkResponseError(error = pointResponse.errorCode)
+            }
+        }
+    }
+
+    private fun savePoints(points: List<PointDto>, trackServerId: Int) {
+        var trackId: Int
+        localRepository.getTrackIdByServerId(trackServerId).onSuccess {
+            trackId = it.result
+            localRepository.insertPointList(points, trackId)
+        }
+    }
+
+    private fun checkResponseError(error: String) {
+        if (error == INVALID_TOKEN_ERROR) {
+            preferencesStore.clearAuthorizationToken()
+            val intent = Intent(context, AuthorizationActivity::class.java)
+            startActivity(intent)
+            fragmentContainerActivityCallback?.closeActivity()
+        } else {
+            toastProvider.showErrorMessage(error)
+        }
+    }
+
+    private fun synchronizeDataWithServer() {
+        isSynchronizing = true
+        for (track in tracks) {
+            if (track.serverId == null) {
+                getTrackPoints(track)
+            }
+        }
+        getTracksFromServer()
+    }
+
+    private fun getTrackPoints(track: TrackDbo) {
+        localRepository.getTrackPoints(track.id).onSuccess {
+            points = it.result
+            saveTrackOnServer(track)
+        }
+    }
+
+    private fun saveTrackOnServer(track: TrackDbo) {
+        remoteRepository.saveTrack(
+            SaveTrackRequest(
+                token = preferencesStore.getAuthorizationToken(),
+                beginTime = track.beginTime,
+                duration = track.duration,
+                distance = track.distance,
+                points = points.toList()
+            )
+        ).continueWith { task ->
+            if (task.error != null) {
+                toastProvider.showErrorMessage(error = task.error.message.toString())
+            } else {
+                handleSaveTrackResponse(task.result, track)
+            }
+        }
+    }
+
+    private fun handleSaveTrackResponse(saveTrackResponse: SaveTrackResponse, track: TrackDbo) {
+        when (saveTrackResponse.status) {
+            ResponseStatus.OK.toString() -> {
+                track.serverId = saveTrackResponse.serverId
+            }
+            ResponseStatus.ERROR.toString() -> {
+                checkResponseError(saveTrackResponse.errorCode)
+            }
+        }
+    }
+
+    private fun onSwipeRefresh() {
+        swipeRefreshLayout.isRefreshing = true
+        synchronizeDataWithServer()
+    }
+
+    private fun onAddTrack() {
+        val intent = Intent(context, RunActivity::class.java)
+        startActivity(intent)
     }
 
     private fun showProgress() {
@@ -153,30 +277,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         progressBar.visibility = View.INVISIBLE
     }
 
-    private fun saveTracksInDb(trackList: List<Track>) {
-        for (track in trackList) {
-            localRepository.saveTrack(track)
-        }
-    }
-
-    private fun synchronizeDataWithServer() {
-        for (track in tracks) {
-            if (track.isNotSent.toBoolean()) {
-                saveTrackOnServer(track)
-            }
-        }
-    }
-
-    private fun saveTrackOnServer(track: Track) {
-        //TODO
-    }
-
-    private fun onSwipeRefresh() {
-        swipeRefreshLayout.isRefreshing = true
-        synchronizeDataWithServer()
-    }
-
-    override fun onItemClick(track: Track) {
+    override fun onItemClick(track: TrackDbo) {
         val arguments = Bundle().apply {
             putParcelable(TrackFragment.TRACK_ITEM, track)
         }
@@ -190,11 +291,18 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         super.onPause()
         tracks.clear()
         trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
+        scrollPosition =
+            (trackListRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         arguments?.apply {
-            putBoolean(REFRESHING_FLAG, isRefreshing)
+            putBoolean(REFRESHING_FLAG, swipeRefreshLayout.isRefreshing)
+            putBoolean(DATA_FETCHING_FLAG, isDataFetched)
             putInt(SCROLL_POSITION, scrollPosition)
-            putInt(TRACKS_COUNT, tracks.size)
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putBundle(SAVED_STATE, arguments)
     }
 
     override fun onDetach() {

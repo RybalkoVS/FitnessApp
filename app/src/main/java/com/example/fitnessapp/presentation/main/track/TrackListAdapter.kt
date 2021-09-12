@@ -6,15 +6,15 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.fitnessapp.R
-import com.example.fitnessapp.data.model.track.Track
+import com.example.fitnessapp.data.model.track.TrackDbo
 
 class TrackListAdapter(
-    private var tracks: MutableList<Track>,
+    private var tracks: MutableList<TrackDbo>,
     private val onItemClickListener: OnItemClickListener
 ) : RecyclerView.Adapter<TrackListAdapter.TrackViewHolder>() {
 
     interface OnItemClickListener {
-        fun onItemClick(track: Track)
+        fun onItemClick(track: TrackDbo)
     }
 
     inner class TrackViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
@@ -23,10 +23,10 @@ class TrackListAdapter(
         private val distanceTextView: TextView = itemView.findViewById(R.id.text_track_distance)
         private val durationTextView: TextView = itemView.findViewById(R.id.text_track_duration)
 
-        fun bind(track: Track) {
-            beginDateTextView.text = track.beginTime.toString()
+        fun bind(track: TrackDbo) {
+            beginDateTextView.text = track.beginTimeDateFormat
             distanceTextView.text = track.distance.toString()
-            durationTextView.text = track.duration.toString()
+            durationTextView.text = track.durationInMinutes.toString()
             itemView.setOnClickListener {
                 onItemClickListener.onItemClick(track)
             }

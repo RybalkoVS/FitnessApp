@@ -1,12 +1,12 @@
-package com.example.fitnessapp.data.model.point
+package com.example.fitnessapp.data.model.track
 
 import com.google.gson.annotations.SerializedName
 
-data class PointResponse(
+data class SaveTrackResponse(
     @SerializedName("status")
     val status: String,
-    @SerializedName("points")
-    val pointList: List<PointDto>,
+    @SerializedName("id")
+    val serverId: Int,
     @SerializedName("code")
     val errorCode: String
 )
