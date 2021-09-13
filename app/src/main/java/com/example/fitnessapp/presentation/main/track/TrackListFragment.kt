@@ -72,9 +72,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
         savedInstanceState?.let {
             arguments = it.getBundle(SAVED_STATE)
-            restoreState(arguments)
-        }
-        getTracksFromDb()
+        } ?: getTracksFromDb()
 
         swipeRefreshLayout.setOnRefreshListener {
             onSwipeRefresh()
@@ -82,7 +80,11 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         fabAddTrack.setOnClickListener {
             onAddTrack()
         }
+    }
 
+    override fun onResume() {
+        super.onResume()
+        restoreState(arguments)
     }
 
     private fun initViews(v: View) {
@@ -99,6 +101,9 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             swipeRefreshLayout.isRefreshing = it.getBoolean(REFRESHING_FLAG)
             isDataFetched = it.getBoolean(DATA_FETCHING_FLAG)
             scrollPosition = it.getInt(SCROLL_POSITION)
+        }
+        if (tracks.isEmpty()) {
+            getTracksFromDb()
         }
         if (swipeRefreshLayout.isRefreshing) {
             synchronizeDataWithServer()
@@ -289,10 +294,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     override fun onPause() {
         super.onPause()
-        tracks.clear()
-        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
         scrollPosition =
             (trackListRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
+        tracks.clear()
+        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
         arguments?.apply {
             putBoolean(REFRESHING_FLAG, swipeRefreshLayout.isRefreshing)
             putBoolean(DATA_FETCHING_FLAG, isDataFetched)
