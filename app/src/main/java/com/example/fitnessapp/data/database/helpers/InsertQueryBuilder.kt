@@ -31,7 +31,6 @@ class InsertQueryBuilder {
         } else {
             val filedNamesString = values.keys.joinToString(SEPARATOR)
             val fieldValuesString = values.values.joinToString(SEPARATOR)
-            val updateString = values.entries.joinToString(SEPARATOR)
             db.execSQL("$INSERT_OR_IGNORE_INTO $tableName ($filedNamesString) $VALUES($fieldValuesString)")
         }
     }

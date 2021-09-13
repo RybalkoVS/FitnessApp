@@ -72,6 +72,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
         savedInstanceState?.let {
             arguments = it.getBundle(SAVED_STATE)
+            restoreState(arguments)
         } ?: getTracksFromDb()
 
         swipeRefreshLayout.setOnRefreshListener {
@@ -82,15 +83,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        restoreState(arguments)
-    }
-
     private fun initViews(v: View) {
         trackListRecyclerView = v.findViewById(R.id.recycler_view_track_list)
         trackListRecyclerView.adapter = trackListAdapter
-        trackListRecyclerView.layoutManager = LinearLayoutManager(requireContext())
+        trackListRecyclerView.layoutManager = LinearLayoutManager(context)
         progressBar = v.findViewById(R.id.progress_bar)
         swipeRefreshLayout = v.findViewById(R.id.swipe_refresh_layout)
         fabAddTrack = v.findViewById(R.id.fab_add_track)
@@ -102,12 +98,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             isDataFetched = it.getBoolean(DATA_FETCHING_FLAG)
             scrollPosition = it.getInt(SCROLL_POSITION)
         }
-        if (tracks.isEmpty()) {
-            getTracksFromDb()
-        }
-        if (swipeRefreshLayout.isRefreshing) {
-            synchronizeDataWithServer()
-        }
+        getTracksFromDb()
     }
 
     private fun getTracksFromDb() {
@@ -116,6 +107,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
                 toastProvider.showErrorMessage(error = task.error.message.toString())
             } else {
                 tracks.clear()
+                trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
                 tracks.addAll(task.result)
                 tracks.sortByDescending { it.beginTime }
                 trackListAdapter.notifyItemRangeInserted(ADAPTER_START_POSITION, tracks.size)
@@ -126,7 +118,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     }
 
     private fun checkTracks(trackList: List<TrackDbo>) {
-        if (trackList.isNullOrEmpty() && !isDataFetched) {
+        if (trackList.isEmpty() && !isDataFetched) {
             getTracksFromServer()
         } else if (trackList.isNotEmpty() && !isDataFetched) {
             synchronizeDataWithServer()
@@ -249,6 +241,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
                 toastProvider.showErrorMessage(error = task.error.message.toString())
             } else {
                 handleSaveTrackResponse(task.result, track)
+                points.clear()
             }
         }
     }
@@ -257,6 +250,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         when (saveTrackResponse.status) {
             ResponseStatus.OK.toString() -> {
                 track.serverId = saveTrackResponse.serverId
+                localRepository.updateTrack(track)
             }
             ResponseStatus.ERROR.toString() -> {
                 checkResponseError(saveTrackResponse.errorCode)
@@ -296,8 +290,6 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         super.onPause()
         scrollPosition =
             (trackListRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
-        tracks.clear()
-        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
         arguments?.apply {
             putBoolean(REFRESHING_FLAG, swipeRefreshLayout.isRefreshing)
             putBoolean(DATA_FETCHING_FLAG, isDataFetched)
@@ -308,6 +300,12 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         outState.putBundle(SAVED_STATE, arguments)
+    }
+
+    override fun onDestroyView() {
+        tracks.clear()
+        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
+        super.onDestroyView()
     }
 
     override fun onDetach() {

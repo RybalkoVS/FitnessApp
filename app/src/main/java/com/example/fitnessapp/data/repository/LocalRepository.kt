@@ -6,6 +6,7 @@ import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.data.database.Db
 import com.example.fitnessapp.data.database.helpers.InsertQueryBuilder
 import com.example.fitnessapp.data.database.helpers.SelectQueryBuilder
+import com.example.fitnessapp.data.database.helpers.UpdateQueryBuilder
 import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.point.PointDto
 import com.example.fitnessapp.data.model.track.TrackDbo
@@ -119,6 +120,15 @@ class LocalRepository {
                 cursor?.close()
             }
             return@callInBackground points
+        }
+    }
+
+    fun updateTrack(track: TrackDbo): Task<Unit> {
+        return Task.callInBackground {
+            UpdateQueryBuilder().setTableName(name = Db.TRACK_TABLE_NAME)
+                .addValueToUpdate(name = Db.TRACK_SERVER_ID, value = track.serverId.toString())
+                .addWhereParam(name = Db.DB_ID, value = track.id.toString())
+                .build(FitnessApp.INSTANCE.database)
         }
     }
 
