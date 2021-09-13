@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
     private lateinit var logoutBtn: Button
     private lateinit var navigationView: NavigationView
     private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private val localRepository = FitnessApp.INSTANCE.localRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +77,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
 
     private fun onLogout() {
         preferencesStore.clearAuthorizationToken()
+        localRepository.clearDb()
         moveToAuthorization()
     }
 

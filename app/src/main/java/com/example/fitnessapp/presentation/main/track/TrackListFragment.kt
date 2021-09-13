@@ -193,15 +193,20 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     private fun savePoints(points: List<PointDto>, trackServerId: Int) {
         var trackId: Int
-        localRepository.getTrackIdByServerId(trackServerId).onSuccess {
-            trackId = it.result
-            localRepository.insertPointList(points, trackId)
+        localRepository.getTrackIdByServerId(trackServerId).continueWith { task ->
+            if (task.error != null) {
+                toastProvider.showErrorMessage(error = task.error.message.toString())
+            } else {
+                trackId = task.result
+                localRepository.insertPointList(points, trackId)
+            }
         }
     }
 
     private fun checkResponseError(error: String) {
         if (error == INVALID_TOKEN_ERROR) {
             preferencesStore.clearAuthorizationToken()
+            localRepository.clearDb()
             val intent = Intent(context, AuthorizationActivity::class.java)
             startActivity(intent)
             fragmentContainerActivityCallback?.closeActivity()
@@ -278,7 +283,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     override fun onItemClick(track: TrackDbo) {
         val arguments = Bundle().apply {
-            putParcelable(TrackFragment.TRACK_ITEM, track)
+            putParcelable(TrackFragment.TRACK_ITEM_EXTRA, track)
         }
         fragmentContainerActivityCallback?.showFragment(
             fragmentTag = TrackFragment.TAG,

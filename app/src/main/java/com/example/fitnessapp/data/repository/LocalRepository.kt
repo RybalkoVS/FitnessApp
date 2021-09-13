@@ -4,6 +4,7 @@ import android.database.Cursor
 import bolts.Task
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.data.database.Db
+import com.example.fitnessapp.data.database.helpers.DeleteQueryBuilder
 import com.example.fitnessapp.data.database.helpers.InsertQueryBuilder
 import com.example.fitnessapp.data.database.helpers.SelectQueryBuilder
 import com.example.fitnessapp.data.database.helpers.UpdateQueryBuilder
@@ -82,7 +83,7 @@ class LocalRepository {
 
     fun getTrackIdByServerId(serverId: Int): Task<Int> {
         return Task.callInBackground {
-            var trackId = 0
+            val trackId: Int
             var cursor: Cursor? = null
             try {
                 cursor = SelectQueryBuilder().setTableName(name = Db.TRACK_TABLE_NAME)
@@ -90,7 +91,7 @@ class LocalRepository {
                     .addWhereParam(name = Db.TRACK_SERVER_ID, value = serverId.toString())
                     .build(FitnessApp.INSTANCE.database)
                 cursor.moveToFirst()
-                trackId = cursor.getInt(cursor.getColumnIndexOrThrow(Db.TRACK_SERVER_ID))
+                trackId = cursor.getInt(cursor.getColumnIndexOrThrow(Db.DB_ID))
             } finally {
                 cursor?.close()
             }
@@ -104,7 +105,7 @@ class LocalRepository {
             var cursor: Cursor? = null
             try {
                 cursor = SelectQueryBuilder().addSelectableField(SELECT_ALL)
-                    .setTableName(Db.TRACK_TABLE_NAME)
+                    .setTableName(Db.POINT_TABLE_NAME)
                     .addWhereParam(name = Db.TRACK_ID, value = trackId.toString())
                     .build(FitnessApp.INSTANCE.database)
                 while (cursor.moveToNext()) {
@@ -128,6 +129,15 @@ class LocalRepository {
             UpdateQueryBuilder().setTableName(name = Db.TRACK_TABLE_NAME)
                 .addValueToUpdate(name = Db.TRACK_SERVER_ID, value = track.serverId.toString())
                 .addWhereParam(name = Db.DB_ID, value = track.id.toString())
+                .build(FitnessApp.INSTANCE.database)
+        }
+    }
+
+    fun clearDb() {
+        Task.callInBackground {
+            DeleteQueryBuilder().setTableName(Db.TRACK_TABLE_NAME)
+                .build(FitnessApp.INSTANCE.database)
+            DeleteQueryBuilder().setTableName(Db.POINT_TABLE_NAME)
                 .build(FitnessApp.INSTANCE.database)
         }
     }
