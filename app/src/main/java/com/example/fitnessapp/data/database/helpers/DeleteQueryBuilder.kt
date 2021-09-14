@@ -5,7 +5,7 @@ import android.database.sqlite.SQLiteDatabase
 class DeleteQueryBuilder {
 
     companion object {
-        private const val DELETE_FROM = "DELETE_FROM"
+        private const val DELETE_FROM = "DELETE FROM"
         private const val EMPTY_STRING = ""
         private const val ERROR_MESSAGE = "Incorrect data"
     }

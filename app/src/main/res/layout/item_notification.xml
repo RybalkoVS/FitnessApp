@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/notification_item_height">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <ImageView
+            android:id="@+id/image_notification"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:contentDescription="@string/notification_description"
+            android:src="@drawable/ic_action_notifications"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_notification_date"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/notification_item_margin"
+            android:layout_marginTop="@dimen/notification_item_margin"
+            android:textColor="@color/main_text_color"
+            android:textSize="@dimen/small_text_size"
+            app:layout_constraintStart_toEndOf="@+id/image_notification"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="2021-08-01" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/text_notification_time"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/notification_item_margin"
+            android:textColor="@color/main_text_color"
+            android:textSize="@dimen/small_text_size"
+            app:layout_constraintStart_toEndOf="@+id/image_notification"
+            app:layout_constraintTop_toBottomOf="@+id/text_notification_date"
+            tools:text="08:00" />
+
+        <ImageButton
+            android:id="@+id/image_button"
+            android:layout_width="wrap_content"
+            android:layout_height="@dimen/min_delete_button_height"
+            android:backgroundTint="@color/white"
+            android:contentDescription="@string/notification_description"
+            android:src="@drawable/ic_action_delete"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</com.google.android.material.card.MaterialCardView>

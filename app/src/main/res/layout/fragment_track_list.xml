@@ -24,7 +24,7 @@
         android:layout_gravity="bottom|end"
         android:layout_margin="@dimen/fab_margin"
         android:backgroundTint="@color/main_color"
-        android:contentDescription="@string/add_track"
+        android:contentDescription="@string/track_description"
         android:src="@drawable/ic_action_add"
         app:layout_behavior="com.google.android.material.behavior.HideBottomViewOnScrollBehavior"
         app:tint="@color/secondary_text_color" />
@@ -35,6 +35,25 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:indeterminateTint="@color/main_color"
+        android:visibility="invisible" />
+
+    <ImageView
+        android:id="@+id/image_no_track_found"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:contentDescription="@string/track_description"
+        android:src="@mipmap/ic_launcher_foreground"
+        android:visibility="invisible" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_no_tracks_found"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="@dimen/no_tracks_image_margin"
+        android:text="@string/no_tracks_found"
+        android:textColor="@color/main_text_color"
         android:visibility="invisible" />
 
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

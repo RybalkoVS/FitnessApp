@@ -20,7 +20,14 @@
     <dimen name="track_item_height">96dp</dimen>
     <dimen name="margin_between_text">4dp</dimen>
     <dimen name="margin_between_items">4dp</dimen>
+    <dimen name="no_tracks_image_margin">64dp</dimen>
     
     <!--map with track  -->
-    <dimen name="text__margin">8dp</dimen>
+    <dimen name="text_margin">8dp</dimen>
+
+    <!--notification list item    -->
+    <dimen name="notification_item_height">64dp</dimen>
+    <dimen name="notification_item_margin">8dp</dimen>
+    <dimen name="min_delete_button_height">48dp</dimen>
+
 </resources>

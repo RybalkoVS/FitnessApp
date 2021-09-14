@@ -23,11 +23,22 @@
     <string name="logout">Log out</string>
 
     <!--tracks    -->
-    <string name="add_track">add track</string>
+    <string name="track_description">track</string>
     <string name="distance">Distance: </string>
     <string name="duration">Duration: </string>
+    <string name="no_tracks_found">No tracks found</string>
     <string name="finish_marker">FINISH</string>
     <string name="start_marker">START</string>
     <string name="metres">M</string>
+
+
+    <!--notifications    -->
+    <string name="notification_description">notification</string>
+    <string name="no_notifications_found">No notifications found</string>
+    <string name="date">Enter date </string>
+    <string name="time">Enter time </string>
+    <string name="add_notification">Add notification</string>
+    <string name="cancel_btn_text">Cancel</string>
+    <string name="add_btn_text">Add</string>
 
 </resources>

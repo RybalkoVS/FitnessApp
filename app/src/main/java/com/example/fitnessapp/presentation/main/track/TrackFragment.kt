@@ -16,7 +16,7 @@ import com.example.fitnessapp.toLatLng
 import com.google.android.gms.maps.*
 import com.google.android.gms.maps.model.*
 
-class TrackFragment : Fragment(), OnMapReadyCallback {
+class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
 
     companion object {
         const val TAG = "TRACK_FRAGMENT"
@@ -39,15 +39,6 @@ class TrackFragment : Fragment(), OnMapReadyCallback {
     private lateinit var mapView: MapView
     private lateinit var distanceTextView: TextView
     private lateinit var durationTextView: TextView
-
-    override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
-    ): View? {
-        super.onCreateView(inflater, container, savedInstanceState)
-        return inflater.inflate(R.layout.fragment_track, container, false)
-    }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)

@@ -4,7 +4,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageView
 import android.widget.ProgressBar
+import android.widget.TextView
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -46,6 +48,8 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private lateinit var progressBar: ProgressBar
     private lateinit var swipeRefreshLayout: SwipeRefreshLayout
     private lateinit var fabAddTrack: FloatingActionButton
+    private lateinit var noTracksTextView: TextView
+    private lateinit var noTracksImageView: ImageView
     private var tracks = mutableListOf<TrackDbo>()
     private var points = mutableListOf<PointDbo>()
     private val trackListAdapter = TrackListAdapter(tracks, this)
@@ -90,6 +94,8 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         progressBar = v.findViewById(R.id.progress_bar)
         swipeRefreshLayout = v.findViewById(R.id.swipe_refresh_layout)
         fabAddTrack = v.findViewById(R.id.fab_add_track)
+        noTracksImageView = v.findViewById(R.id.image_no_track_found)
+        noTracksTextView = v.findViewById(R.id.text_no_tracks_found)
     }
 
     private fun restoreState(bundle: Bundle?) {
@@ -122,6 +128,9 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             getTracksFromServer()
         } else if (trackList.isNotEmpty() && !isDataFetched) {
             synchronizeDataWithServer()
+            hideNoTracksLabel()
+        } else {
+            hideProgress()
         }
     }
 
@@ -145,6 +154,11 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             ResponseStatus.OK.toString() -> {
                 if (trackResponse.trackList.size > tracks.size) {
                     saveTracksInDb(trackResponse.trackList)
+                } else {
+                    hideProgress()
+                }
+                if (trackResponse.trackList.isEmpty()) {
+                    showNoTracksLabel()
                 }
                 isDataFetched = true
                 swipeRefreshLayout.isRefreshing = false
@@ -153,7 +167,6 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
                 checkResponseError(trackResponse.errorCode)
             }
         }
-        hideProgress()
     }
 
     private fun saveTracksInDb(trackList: List<TrackDto>) {
@@ -279,6 +292,16 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     private fun hideProgress() {
         progressBar.visibility = View.INVISIBLE
+    }
+
+    private fun showNoTracksLabel() {
+        noTracksTextView.visibility = View.VISIBLE
+        noTracksImageView.visibility = View.VISIBLE
+    }
+
+    private fun hideNoTracksLabel() {
+        noTracksTextView.visibility = View.INVISIBLE
+        noTracksImageView.visibility = View.INVISIBLE
     }
 
     override fun onItemClick(track: TrackDbo) {
