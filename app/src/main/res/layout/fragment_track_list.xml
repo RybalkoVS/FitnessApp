@@ -22,7 +22,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom|end"
-        android:layout_margin="@dimen/fav_default_margin"
+        android:layout_margin="@dimen/fab_margin"
         android:backgroundTint="@color/main_color"
         android:contentDescription="@string/add_track"
         android:src="@drawable/ic_action_add"

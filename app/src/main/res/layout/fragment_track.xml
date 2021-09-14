@@ -8,11 +8,75 @@
 
     <com.google.android.gms.maps.MapView
         android:id="@+id/map"
-        android:name="com.google.android.gms.maps.SupportMapFragment"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_distance_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/distance"
+        android:textColor="@color/main_text_color"
+        android:textSize="@dimen/mid_text_size"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_distance_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/main_text_color"
+        android:textSize="@dimen/mid_text_size"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/text_distance_label"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="1111" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_metres_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/metres"
+        android:textColor="@color/main_text_color"
+        android:textSize="@dimen/mid_text_size"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/text_distance_value"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_duration_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:text="@string/duration"
+        android:textColor="@color/main_text_color"
+        android:textSize="@dimen/mid_text_size"
+        android:textStyle="bold"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/text_distance_label" />
+
+    <com.google.android.material.textview.MaterialTextView
+        android:id="@+id/text_duration_value"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:layout_marginTop="8dp"
+        android:textColor="@color/main_text_color"
+        android:textSize="@dimen/mid_text_size"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@+id/text_duration_label"
+        app:layout_constraintTop_toBottomOf="@+id/text_distance_value"
+        tools:text="00:10:05" />
 </androidx.constraintlayout.widget.ConstraintLayout>
