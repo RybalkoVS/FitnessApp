@@ -80,7 +80,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 passwordEditText.getValue()
             )
         ) {
-            toastProvider.showErrorMessage(error = getString(R.string.empty_fields_toast))
+            toastProvider.showMessage(message = getString(R.string.empty_fields_toast))
         } else {
             sendLoginRequest()
         }
@@ -94,7 +94,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 checkEnteredData(task.result)
             }
@@ -108,7 +108,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                toastProvider.showErrorMessage(error = loginResponse.errorCode)
+                toastProvider.showMessage(message = loginResponse.errorCode)
             }
         }
     }

@@ -9,7 +9,7 @@ import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.track.TrackDbo
 
 class TrackListAdapter(
-    private var tracks: MutableList<TrackDbo>,
+    private var tracks: List<TrackDbo>,
     private val onItemClickListener: OnItemClickListener
 ) : RecyclerView.Adapter<TrackListAdapter.TrackViewHolder>() {
 

@@ -93,7 +93,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 repeatPasswordEditText.getValue()
             )
         ) {
-            toastProvider.showErrorMessage(getString(R.string.empty_fields_toast))
+            toastProvider.showMessage(getString(R.string.empty_fields_toast))
         } else {
             checkEnteredData()
         }
@@ -108,7 +108,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         if (isDataValid) {
             sendRegisterRequest()
         } else {
-            toastProvider.showErrorMessage(error = getString(R.string.incorrect_email_or_password_toast))
+            toastProvider.showMessage(message = getString(R.string.incorrect_email_or_password_toast))
         }
     }
 
@@ -122,7 +122,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 checkRegisterResponse(task.result)
             }
@@ -136,7 +136,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                toastProvider.showErrorMessage(error = registrationResponse.errorCode)
+                toastProvider.showMessage(message = registrationResponse.errorCode)
             }
         }
     }

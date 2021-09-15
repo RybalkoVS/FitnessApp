@@ -2,11 +2,11 @@ package com.example.fitnessapp.presentation.main
 
 import android.content.Intent
 import android.content.res.Configuration
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Button
 import androidx.appcompat.app.ActionBarDrawerToggle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.Toolbar
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
@@ -16,7 +16,7 @@ import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
-import com.example.fitnessapp.presentation.main.notification.NotificationsFragment
+import com.example.fitnessapp.presentation.main.notification.NotificationListFragment
 import com.example.fitnessapp.presentation.main.track.TrackFragment
 import com.example.fitnessapp.presentation.main.track.TrackListFragment
 import com.google.android.material.navigation.NavigationView
@@ -96,7 +96,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
                     true
                 }
                 R.id.menu_item_notifications -> {
-                    showFragment(NotificationsFragment.TAG)
+                    showFragment(NotificationListFragment.TAG)
                     drawerLayout.closeDrawer(GravityCompat.START)
                     true
                 }
@@ -127,8 +127,8 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
 
     override fun getFragmentByTag(fragmentTag: String, args: Bundle?): Fragment {
         return when (fragmentTag) {
-            NotificationsFragment.TAG -> {
-                NotificationsFragment.newInstance()
+            NotificationListFragment.TAG -> {
+                NotificationListFragment.newInstance()
             }
             TrackFragment.TAG -> {
                 TrackFragment.newInstance(args)

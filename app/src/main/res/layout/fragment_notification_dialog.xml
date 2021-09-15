@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context=".presentation.main.notification.dialogs.NotificationDialogFragment">
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/interval_between_fields">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_notification_date"
+            android:layout_width="@dimen/input_field_width"
+            android:layout_height="@dimen/input_field_height"
+            android:focusable="false"
+            android:hint="@string/date"
+            android:inputType="date"
+            tools:ignore="TextContrastCheck" />
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/interval_between_fields">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/edit_text_notification_time"
+            android:layout_width="@dimen/input_field_width"
+            android:layout_height="@dimen/input_field_height"
+            android:focusable="false"
+            android:hint="@string/time"
+            android:inputType="time"
+            tools:ignore="TextContrastCheck" />
+    </com.google.android.material.textfield.TextInputLayout>
+</LinearLayout>

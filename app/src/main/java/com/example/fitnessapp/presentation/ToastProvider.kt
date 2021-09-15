@@ -5,10 +5,10 @@ import android.widget.Toast
 
 class ToastProvider(private val context: Context?) {
 
-    fun showErrorMessage(error: String) {
+    fun showMessage(message: String) {
         Toast.makeText(
             context,
-            error,
+            message,
             Toast.LENGTH_SHORT
         ).show()
     }

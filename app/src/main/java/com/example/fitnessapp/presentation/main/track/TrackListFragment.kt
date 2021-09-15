@@ -110,7 +110,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun getTracksFromDb() {
         localRepository.getTracks().continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 tracks.clear()
                 trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
@@ -142,7 +142,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             TrackRequest(token = preferencesStore.getAuthorizationToken())
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(task.error.message.toString())
+                toastProvider.showMessage(task.error.message.toString())
             } else {
                 handleTracksServerResponse(task.result)
             }
@@ -186,7 +186,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             )
         ).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 handlePointsRequest(task.result, trackServerId)
             }
@@ -208,7 +208,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         var trackId: Int
         localRepository.getTrackIdByServerId(trackServerId).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 trackId = task.result
                 localRepository.insertPointList(points, trackId)
@@ -224,7 +224,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             startActivity(intent)
             fragmentContainerActivityCallback?.closeActivity()
         } else {
-            toastProvider.showErrorMessage(error)
+            toastProvider.showMessage(error)
         }
     }
 
@@ -256,7 +256,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             )
         ).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showErrorMessage(error = task.error.message.toString())
+                toastProvider.showMessage(message = task.error.message.toString())
             } else {
                 handleSaveTrackResponse(task.result, track)
                 points.clear()

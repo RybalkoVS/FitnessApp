@@ -11,8 +11,8 @@
     <string name="repeat_password">Repeat password</string>
     <string name="firstname">Firstname</string>
     <string name="lastname">Lastname</string>
-    <string name="no_callback_implementation_error">must implement FragmentContainerActivity</string>
-    <string name="empty_fields_toast">Fill all fields!</string>
+    <string name="no_callback_implementation_error">must implement callback</string>
+    <string name="empty_fields_toast">Fill all fields</string>
     <string name="incorrect_email_or_password_toast">Incorrect email or password</string>
 
     <!--nav drawer    -->
@@ -35,10 +35,13 @@
     <!--notifications    -->
     <string name="notification_description">notification</string>
     <string name="no_notifications_found">No notifications found</string>
-    <string name="date">Enter date </string>
-    <string name="time">Enter time </string>
+    <string name="date">Date</string>
+    <string name="time">Time</string>
     <string name="add_notification">Add notification</string>
+    <string name="edit_notification">Edit notification</string>
     <string name="cancel_btn_text">Cancel</string>
     <string name="add_btn_text">Add</string>
+    <string name="save_btn_text">Save</string>
+    <string name="incorrect_time_error">You can\'t run in the past</string>
 
 </resources>

@@ -43,7 +43,7 @@
             tools:text="08:00" />
 
         <ImageButton
-            android:id="@+id/image_button"
+            android:id="@+id/image_button_delete_notification"
             android:layout_width="wrap_content"
             android:layout_height="@dimen/min_delete_button_height"
             android:backgroundTint="@color/white"

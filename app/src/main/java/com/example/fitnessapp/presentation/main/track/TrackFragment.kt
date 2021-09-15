@@ -2,9 +2,7 @@ package com.example.fitnessapp.presentation.main.track
 
 import android.graphics.Color
 import android.os.Bundle
-import android.view.LayoutInflater
 import android.view.View
-import android.view.ViewGroup
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import bolts.Task
@@ -93,7 +91,7 @@ class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
         return track?.let {
             localRepository.getTrackPoints(it.id).continueWith { task ->
                 if (task.error != null) {
-                    toastProvider.showErrorMessage(error = task.error.message.toString())
+                    toastProvider.showMessage(message = task.error.message.toString())
                 } else {
                     points.clear()
                     points.addAll(task.result)
