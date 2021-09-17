@@ -3,7 +3,7 @@ package com.example.fitnessapp.presentation.main.notification
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.fitnessapp.R
@@ -15,24 +15,25 @@ class NotificationListAdapter(
 ) : RecyclerView.Adapter<NotificationListAdapter.NotificationViewHolder>() {
 
     interface OnClickListener {
-        fun onItemClick(notification: Notification)
-        fun onDeleteItem(notificationId: Int)
+        fun onItemClick(notification: Notification, position: Int)
+        fun onDeleteItem(notification: Notification, position: Int)
     }
 
     inner class NotificationViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
 
         private val dateTextView: TextView = itemView.findViewById(R.id.text_notification_date)
         private val timeTextView: TextView = itemView.findViewById(R.id.text_notification_time)
-        private val deleteBtn: Button = itemView.findViewById(R.id.image_button_delete_notification)
+        private val deleteBtn: ImageButton =
+            itemView.findViewById(R.id.image_button_delete_notification)
 
         fun bind(notification: Notification) {
             dateTextView.text = notification.dateInDateFormat
             timeTextView.text = notification.time
             itemView.setOnClickListener {
-                onClickListener.onItemClick(notification)
+                onClickListener.onItemClick(notification, adapterPosition)
             }
             deleteBtn.setOnClickListener {
-                onClickListener.onDeleteItem(notification.id)
+                onClickListener.onDeleteItem(notification, adapterPosition)
             }
         }
     }

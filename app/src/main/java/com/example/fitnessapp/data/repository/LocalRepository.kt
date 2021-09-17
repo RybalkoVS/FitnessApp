@@ -8,6 +8,7 @@ import com.example.fitnessapp.data.database.helpers.DeleteQueryBuilder
 import com.example.fitnessapp.data.database.helpers.InsertQueryBuilder
 import com.example.fitnessapp.data.database.helpers.SelectQueryBuilder
 import com.example.fitnessapp.data.database.helpers.UpdateQueryBuilder
+import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.point.PointDto
 import com.example.fitnessapp.data.model.track.TrackDbo
@@ -17,6 +18,7 @@ class LocalRepository {
 
     companion object {
         private const val SELECT_ALL = "*"
+        private const val SELECT_MAX_ID = "MAX(id) AS id"
     }
 
     fun getTracks(): Task<MutableList<TrackDbo>> {
@@ -133,13 +135,97 @@ class LocalRepository {
         }
     }
 
+    fun getNotifications(): Task<List<Notification>> {
+        return Task.callInBackground {
+            val notifications = mutableListOf<Notification>()
+            var cursor: Cursor? = null
+            try {
+                cursor = SelectQueryBuilder().addSelectableField(SELECT_ALL)
+                    .setTableName(Db.NOTIFICATIONS_TABLE_NAME)
+                    .build(FitnessApp.INSTANCE.database)
+                while (cursor.moveToNext()) {
+                    val notification = Notification(
+                        id = cursor.getInt(cursor.getColumnIndexOrThrow(Db.DB_ID)),
+                        date = cursor.getLong(cursor.getColumnIndexOrThrow(Db.DATE))
+                    )
+                    notifications.add(notification)
+                }
+            } finally {
+                cursor?.close()
+            }
+            return@callInBackground notifications
+        }
+    }
+
+    fun insertNotification(date: Long): Task<Unit> {
+        return Task.callInBackground {
+            InsertQueryBuilder().setTable(name = Db.NOTIFICATIONS_TABLE_NAME)
+                .addValueToInsert(fieldName = Db.DATE, value = date.toString())
+                .build(db = FitnessApp.INSTANCE.database)
+        }
+    }
+
+    fun updateNotification(notificationId: Int?, newDate: Long): Task<Unit> {
+        return Task.callInBackground {
+            UpdateQueryBuilder().setTableName(name = Db.NOTIFICATIONS_TABLE_NAME)
+                .addValueToUpdate(name = Db.DATE, value = newDate.toString())
+                .addWhereParam(name = Db.DB_ID, value = notificationId.toString())
+                .build(FitnessApp.INSTANCE.database)
+        }
+    }
+
+    fun getLastNotification(): Task<Notification> {
+        return Task.callInBackground {
+            var notification: Notification? = null
+            var cursor: Cursor? = null
+            try {
+                cursor = SelectQueryBuilder().setTableName(name = Db.NOTIFICATIONS_TABLE_NAME)
+                    .addSelectableField(field = SELECT_MAX_ID)
+                    .build(FitnessApp.INSTANCE.database)
+                if (cursor.moveToFirst()) {
+                    val notificationId = cursor.getInt(cursor.getColumnIndexOrThrow(Db.DB_ID))
+                    val notificationDate = getNotificationDateById(notificationId)
+                    notification = Notification(notificationId, notificationDate)
+                }
+            } finally {
+                cursor?.close()
+            }
+            return@callInBackground notification
+        }
+    }
+
+    private fun getNotificationDateById(id: Int): Long {
+        val notificationDate: Long
+        var cursor: Cursor? = null
+        try {
+            cursor = SelectQueryBuilder().setTableName(name = Db.NOTIFICATIONS_TABLE_NAME)
+                .addSelectableField(field = Db.DATE)
+                .addWhereParam(name = Db.DB_ID, value = id.toString())
+                .build(FitnessApp.INSTANCE.database)
+            cursor.moveToFirst()
+            notificationDate = cursor.getLong(cursor.getColumnIndexOrThrow(Db.DATE))
+        } finally {
+            cursor?.close()
+        }
+        return notificationDate
+    }
+
+    fun deleteNotification(notificationId: Int): Task<Unit> {
+        return Task.callInBackground {
+            DeleteQueryBuilder().setTableName(Db.NOTIFICATIONS_TABLE_NAME)
+                .addWhereParam(name = Db.DB_ID, value = notificationId.toString())
+                .build(FitnessApp.INSTANCE.database)
+        }
+    }
+
     fun clearDb() {
         Task.callInBackground {
             DeleteQueryBuilder().setTableName(Db.TRACK_TABLE_NAME)
                 .build(FitnessApp.INSTANCE.database)
             DeleteQueryBuilder().setTableName(Db.POINT_TABLE_NAME)
                 .build(FitnessApp.INSTANCE.database)
+            DeleteQueryBuilder().setTableName(Db.NOTIFICATIONS_TABLE_NAME)
+                .build(FitnessApp.INSTANCE.database)
         }
     }
-
 }

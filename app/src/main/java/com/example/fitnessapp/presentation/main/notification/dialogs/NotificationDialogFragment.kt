@@ -13,6 +13,7 @@ import android.widget.TimePicker
 import androidx.fragment.app.DialogFragment
 import com.example.fitnessapp.FitnessApp
 import com.example.fitnessapp.R
+import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.main.notification.NotificationListFragment
 import com.example.fitnessapp.presentation.main.notification.NotificationsFragmentCallback
@@ -33,12 +34,12 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
     }
 
     private var dialogType: String? = null
+    private var editableNotification: Notification? = null
     private var notificationsFragmentCallback: NotificationsFragmentCallback? = null
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
     private var calendar = Calendar.getInstance()
     private lateinit var dateEditText: EditText
     private lateinit var timeEditText: EditText
-    private var readyToDismiss = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -52,6 +53,7 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
     override fun onCreateDialog(savedInstanceState: Bundle?): Dialog {
         arguments?.let {
             dialogType = it.getString(DIALOG_TYPE)
+            editableNotification = it.getParcelable(NotificationListFragment.NOTIFICATION_EXTRA)
         }
         val dialogBuilder = configureDialog(dialogType)
         return dialogBuilder.create()
@@ -59,56 +61,67 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
 
     private fun configureDialog(type: String?): AlertDialog.Builder {
         var dialog = AlertDialog.Builder(context)
+        val customView = View.inflate(context, R.layout.fragment_notification_dialog, null)
+        initDialogViews(customView)
         when (type) {
             NotificationListFragment.ADD -> {
-                dialog = createAddNotificationDialog()
+                dialog = buildDialog(
+                    dialogView = customView,
+                    title = getString(R.string.add_notification),
+                    positiveButtonText = getString(R.string.add_btn_text)
+                )
             }
             NotificationListFragment.EDIT -> {
-                dialog = createEditNotificationDialog()
+                dialog = buildDialog(
+                    dialogView = customView,
+                    title = getString(R.string.edit_notification),
+                    positiveButtonText = getString(R.string.save_btn_text)
+                )
             }
         }
         return dialog
-    }
-
-    private fun createAddNotificationDialog(): AlertDialog.Builder {
-        val customView = View.inflate(context, R.layout.fragment_notification_dialog, null)
-        initDialogViews(customView)
-        return AlertDialog.Builder(context)
-            .setView(customView)
-            .setTitle(getString(R.string.add_notification))
-            .setPositiveButton(getString(R.string.add_btn_text), this)
-            .setNegativeButton(R.string.cancel_btn_text, this)
-    }
-
-    private fun createEditNotificationDialog(): AlertDialog.Builder {
-        val customView = View.inflate(context, R.layout.fragment_notification_dialog, null)
-        initDialogViews(customView)
-        return AlertDialog.Builder(context)
-            .setView(R.layout.fragment_notification_dialog)
-            .setTitle(getString(R.string.edit_notification))
-            .setPositiveButton(getString(R.string.save_btn_text), this)
-            .setNegativeButton(R.string.cancel_btn_text, this)
     }
 
     private fun initDialogViews(view: View) {
         dateEditText = view.findViewById(R.id.edit_text_notification_date)
         timeEditText = view.findViewById(R.id.edit_text_notification_time)
         dateEditText.setOnClickListener {
-            onEditDateClick()
+            onEditDate()
         }
         timeEditText.setOnClickListener {
-            onEditTimeClick()
+            onEditTime()
         }
+        setCurrentNotificationValue()
     }
 
-    private fun onEditDateClick() {
+    private fun buildDialog(
+        dialogView: View,
+        title: String,
+        positiveButtonText: String
+    ): AlertDialog.Builder {
+        return AlertDialog.Builder(context)
+            .setView(dialogView)
+            .setTitle(title)
+            .setPositiveButton(positiveButtonText, this)
+            .setNegativeButton(getString(R.string.cancel_btn_text), this)
+    }
+
+    private fun onEditDate() {
         val datePicker = DatePickerDialogFragment()
         datePicker.show(childFragmentManager, DatePickerDialogFragment.TAG)
     }
 
-    private fun onEditTimeClick() {
+    private fun onEditTime() {
         val timePicker = TimePickerDialogFragment()
         timePicker.show(childFragmentManager, TimePickerDialogFragment.TAG)
+    }
+
+    private fun setCurrentNotificationValue() {
+        editableNotification?.let {
+            dateEditText.setText(it.dateInDateFormat)
+            timeEditText.setText(it.time)
+            calendar.timeInMillis = it.date
+        }
     }
 
     override fun onClick(dialog: DialogInterface?, which: Int) {
@@ -128,7 +141,6 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
         } else if (!isTimeCorrect()) {
             toastProvider.showMessage(message = getString(R.string.incorrect_time_error))
         } else {
-            readyToDismiss = true
             handlePositiveButtonClick()
         }
     }
@@ -175,11 +187,5 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
     override fun onDetach() {
         notificationsFragmentCallback = null
         super.onDetach()
-    }
-
-    override fun onDismiss(dialog: DialogInterface) {
-        if (readyToDismiss) {
-            super.onDismiss(dialog)
-        }
     }
 }

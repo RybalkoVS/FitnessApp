@@ -34,7 +34,7 @@
 
     <!--notifications    -->
     <string name="notification_description">notification</string>
-    <string name="no_notifications_found">No notifications found</string>
+    <string name="no_notifications_found">Notifications not found</string>
     <string name="date">Date</string>
     <string name="time">Time</string>
     <string name="add_notification">Add notification</string>

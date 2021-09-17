@@ -12,6 +12,7 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
         private const val DB_NAME = "FitnessApp.db"
         const val TRACK_TABLE_NAME = "tracks"
         const val POINT_TABLE_NAME = "points"
+        const val NOTIFICATIONS_TABLE_NAME = "notifications"
         private const val INTEGER_NOT_NULL_PRIMARY_KEY_AUTOINCREMENT =
             "INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT"
         private const val INTEGER = "INTEGER"
@@ -27,12 +28,14 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
         const val DISTANCE = "distance"
         const val LATITUDE = "lat"
         const val LONGITUDE = "lng"
+        const val DATE = "date"
 
     }
 
     override fun onCreate(db: SQLiteDatabase?) {
         buildTracksTable(db)
         buildPointsTable(db)
+        buildNotificationsTable(db)
     }
 
     private fun buildTracksTable(db: SQLiteDatabase?) {
@@ -58,7 +61,16 @@ class Db(context: Context) : SQLiteOpenHelper(context, DB_NAME, null, DB_VERSION
         }
     }
 
+    private fun buildNotificationsTable(db: SQLiteDatabase?) {
+        TableBuilder().apply {
+            setName(NOTIFICATIONS_TABLE_NAME)
+            addField(fieldName = DB_ID, type = INTEGER_NOT_NULL_PRIMARY_KEY_AUTOINCREMENT)
+            addField(fieldName = DATE, type = LONG_NOT_NULL)
+            build(db)
+        }
+    }
+
     override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {
-        //TODO(no migrations)
+        //no migrations
     }
 }

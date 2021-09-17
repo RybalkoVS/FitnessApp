@@ -38,11 +38,15 @@ class UpdateQueryBuilder {
         } else {
             val setString = set.entries.joinToString(SEPARATOR)
             val whereParamsString = whereParams.entries.joinToString(SEPARATOR)
-            if (whereParamsString == EMPTY_STRING) {
-                db.execSQL("$UPDATE $tableName $SET $setString")
-            } else {
-                db.execSQL("$UPDATE $tableName $SET $setString $WHERE $whereParamsString")
-            }
+            createSQLString(db, setString, whereParamsString)
+        }
+    }
+
+    private fun createSQLString(db: SQLiteDatabase, set: String, whereParams: String) {
+        if (whereParams == EMPTY_STRING) {
+            db.execSQL("$UPDATE $tableName $SET $set")
+        } else {
+            db.execSQL("$UPDATE $tableName $SET $set $WHERE $whereParams")
         }
     }
 }

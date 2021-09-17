@@ -18,7 +18,12 @@ import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.point.PointDto
 import com.example.fitnessapp.data.model.point.PointRequest
 import com.example.fitnessapp.data.model.point.PointResponse
-import com.example.fitnessapp.data.model.track.*
+import com.example.fitnessapp.data.model.track.SaveTrackRequest
+import com.example.fitnessapp.data.model.track.SaveTrackResponse
+import com.example.fitnessapp.data.model.track.TrackDbo
+import com.example.fitnessapp.data.model.track.TrackDto
+import com.example.fitnessapp.data.model.track.TrackRequest
+import com.example.fitnessapp.data.model.track.TrackResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
@@ -57,7 +62,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
     private val toastProvider = FitnessApp.INSTANCE.toastProvider
     private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
-    private var scrollPosition: Int = ADAPTER_START_POSITION
+    private var scrollPosition = ADAPTER_START_POSITION
     private var isSynchronizing: Boolean = false
     private var isDataFetched: Boolean = false
 
@@ -126,6 +131,8 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun checkTracks(trackList: List<TrackDbo>) {
         if (trackList.isEmpty() && !isDataFetched) {
             getTracksFromServer()
+        } else if (trackList.isEmpty() && isDataFetched) {
+            showNoTracksLabel()
         } else if (trackList.isNotEmpty() && !isDataFetched) {
             synchronizeDataWithServer()
             hideNoTracksLabel()

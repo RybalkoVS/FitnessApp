@@ -21,7 +21,7 @@
     <dimen name="margin_between_text">4dp</dimen>
     <dimen name="margin_between_items">4dp</dimen>
     <dimen name="no_tracks_image_margin">64dp</dimen>
-    
+
     <!--map with track  -->
     <dimen name="text_margin">8dp</dimen>
 
@@ -29,5 +29,6 @@
     <dimen name="notification_item_height">64dp</dimen>
     <dimen name="notification_item_margin">8dp</dimen>
     <dimen name="min_delete_button_height">48dp</dimen>
+    <dimen name="margin_between_notifications">4dp</dimen>
 
 </resources>
