@@ -31,4 +31,11 @@
     <dimen name="min_delete_button_height">48dp</dimen>
     <dimen name="margin_between_notifications">4dp</dimen>
 
+    <!--run    -->
+    <dimen name="start_btn_height">100dp</dimen>
+    <dimen name="start_btn_margin">16dp</dimen>
+    <dimen name="interval_between_views">8dp</dimen>
+
+    <integer name="def_anim_length">1500</integer>
+    <integer name="half_anim_length">750</integer>
 </resources>

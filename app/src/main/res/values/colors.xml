@@ -15,5 +15,7 @@
     <color name="main_text_color">@color/black</color>
     <color name="secondary_text_color">@color/white</color>
 
+    <!--buttons    -->
+    <color name="finish_btn_color">#FF0000</color>
 
 </resources>

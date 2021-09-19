@@ -44,4 +44,10 @@
     <string name="save_btn_text">Save</string>
     <string name="incorrect_time_error">You can\'t run in the past</string>
 
+    <!--run    -->
+    <string name="start_btn_text">START</string>
+    <string name="finish_btn_text">FINISH</string>
+    <string name="back_to_main_btn_text">Back to main</string>
+    <string name="results_label">Results</string>
+
 </resources>

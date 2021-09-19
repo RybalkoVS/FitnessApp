@@ -3,31 +3,24 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/drawable-anydpi/ic_action_back.xml" value="0.3828125" />
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/drawable-anydpi/ic_action_name.xml" value="0.3828125" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/drawable-v24/ic_launcher_foreground.xml" value="0.22135416666666666" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout-land/fragment_login.xml" value="0.2508818342151676" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout-land/fragment_register.xml" value="0.33" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/activity_authorization.xml" value="0.33" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/activity_main.xml" value="0.36666666666666664" />
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/activity_run.xml" value="0.36666666666666664" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/activity_splash_screen.xml" value="0.33" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/fragment_login.xml" value="0.36666666666666664" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/fragment_register.xml" value="0.35260416666666666" />
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/fragment_track.xml" value="0.36666666666666664" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/fragment_track_list.xml" value="0.36666666666666664" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/item_track.xml" value="0.36666666666666664" />
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/run_results_layout.xml" value="0.36666666666666664" />
+        <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/layout/run_started_layout.xml" value="0.36666666666666664" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/mipmap-anydpi-v26/ic_launcher.xml" value="0.22135416666666666" />
         <entry key="..\:/PROGRAMS/ASProjects/Fitness App/app/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml" value="0.22135416666666666" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/drawable-anydpi/ic_action_delete.xml" value="0.3828125" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/activity_main.xml" value="0.20425724637681159" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/activity_run.xml" value="0.24739583333333334" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/activity_splash_screen.xml" value="0.20425724637681159" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_add_notification_dialog.xml" value="0.24739583333333334" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_login.xml" value="0.20425724637681159" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_notification_dialog.xml" value="0.36666666666666664" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_notifications.xml" value="0.25" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_register.xml" value="0.17831813576494426" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_track.xml" value="0.20516304347826086" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/fragment_track_list.xml" value="0.20425724637681159" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/item_notification.xml" value="0.36666666666666664" />
-        <entry key="..\:/Users/user/AndroidStudioProjects/FitnessApp/app/src/main/res/layout/item_track.xml" value="0.20425724637681159" />
       </map>
     </option>
   </component>
@@ -36,12 +29,5 @@
   </component>
   <component name="ProjectType">
     <option name="id" value="Android" />
-  </component>
-  <component name="VisualizationToolProject">
-    <option name="state">
-      <ProjectState>
-        <option name="scale" value="0.20516304347826086" />
-      </ProjectState>
-    </option>
   </component>
 </project>
