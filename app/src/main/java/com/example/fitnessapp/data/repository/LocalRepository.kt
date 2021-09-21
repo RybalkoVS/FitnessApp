@@ -13,6 +13,7 @@ import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.point.PointDto
 import com.example.fitnessapp.data.model.track.TrackDbo
 import com.example.fitnessapp.data.model.track.TrackDto
+import java.util.*
 
 class LocalRepository {
 
@@ -52,7 +53,7 @@ class LocalRepository {
                 InsertQueryBuilder().setTable(name = Db.TRACK_TABLE_NAME)
                     .addValueToInsert(
                         fieldName = Db.TRACK_SERVER_ID,
-                        value = track.serverId.toString()
+                        value = track.serverId.toString().uppercase()
                     )
                     .addValueToInsert(
                         fieldName = Db.BEGIN_TIME,
@@ -94,6 +95,24 @@ class LocalRepository {
                     .build(FitnessApp.INSTANCE.database)
                 cursor.moveToFirst()
                 trackId = cursor.getInt(cursor.getColumnIndexOrThrow(Db.DB_ID))
+            } finally {
+                cursor?.close()
+            }
+            return@callInBackground trackId
+        }
+    }
+
+    fun getLastTrackId(): Task<Int> {
+        return Task.callInBackground {
+            var trackId: Int? = null
+            var cursor: Cursor? = null
+            try {
+                cursor = SelectQueryBuilder().setTableName(name = Db.TRACK_TABLE_NAME)
+                    .addSelectableField(field = SELECT_MAX_ID)
+                    .build(FitnessApp.INSTANCE.database)
+                if (cursor.moveToFirst()) {
+                    trackId = cursor.getInt(cursor.getColumnIndexOrThrow(Db.DB_ID))
+                }
             } finally {
                 cursor?.close()
             }

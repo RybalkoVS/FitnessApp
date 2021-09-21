@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 
 data class TrackDto(
     @SerializedName("id")
-    var serverId: Int,
+    val serverId: Int? = null,
     @SerializedName("beginsAt")
     val beginTime: Long,
     @SerializedName("time")

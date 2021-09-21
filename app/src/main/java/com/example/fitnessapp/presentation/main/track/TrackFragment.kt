@@ -6,13 +6,22 @@ import android.view.View
 import android.widget.TextView
 import androidx.fragment.app.Fragment
 import bolts.Task
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.track.TrackDbo
+import com.example.fitnessapp.showMessage
 import com.example.fitnessapp.toLatLng
-import com.google.android.gms.maps.*
-import com.google.android.gms.maps.model.*
+import com.google.android.gms.maps.CameraUpdate
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.BitmapDescriptorFactory
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.LatLngBounds
+import com.google.android.gms.maps.model.MarkerOptions
+import com.google.android.gms.maps.model.PolylineOptions
 
 class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
 
@@ -30,8 +39,7 @@ class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
         }
     }
 
-    private val localRepository = FitnessApp.INSTANCE.localRepository
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
+    private val localRepository = DependencyProvider.localRepository
     private val points = mutableListOf<PointDbo>()
     private var track: TrackDbo? = null
     private lateinit var mapView: MapView
@@ -91,7 +99,7 @@ class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
         return track?.let {
             localRepository.getTrackPoints(it.id).continueWith { task ->
                 if (task.error != null) {
-                    toastProvider.showMessage(message = task.error.message.toString())
+                    context.showMessage(message = task.error.message.toString())
                 } else {
                     points.clear()
                     points.addAll(task.result)

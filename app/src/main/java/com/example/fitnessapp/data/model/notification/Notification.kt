@@ -2,9 +2,7 @@ package com.example.fitnessapp.data.model.notification
 
 import android.os.Parcel
 import android.os.Parcelable
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.util.*
+import com.example.fitnessapp.DependencyProvider
 
 data class Notification(
     var id: Int,
@@ -12,21 +10,16 @@ data class Notification(
 ) : Parcelable {
 
     val time: String
-        get() {
-            val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-            val date = Date(this.date)
-            return sdf.format(date)
-        }
+        get() = DependencyProvider.dateTimeFormatter.timeFormat.format(this.date)
+
     val dateInDateFormat: String
-        get() {
-            return DateFormat.getDateInstance().format(this.date)
-        }
+        get() = DependencyProvider.dateTimeFormatter.dateFormat.format(this.date)
+
 
     constructor(parcel: Parcel) : this(
         parcel.readInt(),
         parcel.readLong()
-    ) {
-    }
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(id)

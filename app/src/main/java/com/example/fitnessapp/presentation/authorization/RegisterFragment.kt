@@ -9,7 +9,7 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import bolts.Task
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.registration.RegistrationRequest
 import com.example.fitnessapp.data.model.registration.RegistrationResponse
@@ -17,6 +17,7 @@ import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.main.MainActivity
+import com.example.fitnessapp.showMessage
 
 class RegisterFragment : Fragment(R.layout.fragment_register) {
 
@@ -34,12 +35,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         }
     }
 
-
     private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private val autDataValidator = AuthorizationDataValidator()
-    private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
-    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private val remoteRepository = DependencyProvider.remoteRepository
+    private val preferencesStore = DependencyProvider.preferencesStore
     private lateinit var registerBtn: Button
     private lateinit var moveToLoginBtn: Button
     private lateinit var emailEditText: EditText
@@ -93,7 +92,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 repeatPasswordEditText.getValue()
             )
         ) {
-            toastProvider.showMessage(getString(R.string.empty_fields_toast))
+            context.showMessage(getString(R.string.empty_fields_toast))
         } else {
             checkEnteredData()
         }
@@ -108,7 +107,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         if (isDataValid) {
             sendRegisterRequest()
         } else {
-            toastProvider.showMessage(message = getString(R.string.incorrect_email_or_password_toast))
+            context.showMessage(message = getString(R.string.incorrect_email_or_password_toast))
         }
     }
 
@@ -122,7 +121,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
                 checkRegisterResponse(task.result)
             }
@@ -132,11 +131,14 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun checkRegisterResponse(registrationResponse: RegistrationResponse) {
         when (registrationResponse.status) {
             ResponseStatus.OK.toString() -> {
-                preferencesStore.saveAuthorizationToken(registrationResponse.token)
+                preferencesStore.saveAuthorizationToken(
+                    context = requireContext(),
+                    token = registrationResponse.token
+                )
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                toastProvider.showMessage(message = registrationResponse.errorCode)
+                context.showMessage(message = registrationResponse.errorCode)
             }
         }
     }

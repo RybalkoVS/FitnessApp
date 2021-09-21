@@ -9,14 +9,16 @@ import android.widget.Button
 import android.widget.EditText
 import androidx.fragment.app.Fragment
 import bolts.Task
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.login.LoginRequest
 import com.example.fitnessapp.data.model.login.LoginResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
+import com.example.fitnessapp.presentation.main.AuthorizationTokenExpiredDialog
 import com.example.fitnessapp.presentation.main.MainActivity
+import com.example.fitnessapp.showMessage
 
 class LoginFragment : Fragment(R.layout.fragment_login) {
 
@@ -33,9 +35,8 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private val authDataValidator = AuthorizationDataValidator()
-    private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
-    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private val remoteRepository = DependencyProvider.remoteRepository
+    private val preferencesStore = DependencyProvider.preferencesStore
     private lateinit var loginBtn: Button
     private lateinit var moveToRegisterBtn: Button
     private lateinit var emailEditText: EditText
@@ -54,6 +55,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         super.onViewCreated(view, savedInstanceState)
         initViews(view)
         moveToRegisterBtn.paintFlags = Paint.UNDERLINE_TEXT_FLAG
+
+        if (preferencesStore.isTokenExpired(context = requireContext())) {
+            showExplanationDialog()
+        }
 
         loginBtn.setOnClickListener {
             checkEmptyInput()
@@ -74,13 +79,21 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         passwordEditText = v.findViewById(R.id.edit_text_password)
     }
 
+    private fun showExplanationDialog() {
+        AuthorizationTokenExpiredDialog().show(
+            childFragmentManager,
+            AuthorizationTokenExpiredDialog.TAG
+        )
+        preferencesStore.setTokenValid(context = requireContext())
+    }
+
     private fun checkEmptyInput() {
         if (authDataValidator.isInputEmpty(
                 emailEditText.getValue(),
                 passwordEditText.getValue()
             )
         ) {
-            toastProvider.showMessage(message = getString(R.string.empty_fields_toast))
+            context.showMessage(message = getString(R.string.empty_fields_toast))
         } else {
             sendLoginRequest()
         }
@@ -94,7 +107,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
                 checkEnteredData(task.result)
             }
@@ -104,16 +117,20 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun checkEnteredData(loginResponse: LoginResponse) {
         when (loginResponse.status) {
             ResponseStatus.OK.toString() -> {
-                preferencesStore.saveAuthorizationToken(loginResponse.token)
+                preferencesStore.saveAuthorizationToken(
+                    context = requireContext(),
+                    token = loginResponse.token
+                )
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                toastProvider.showMessage(message = loginResponse.errorCode)
+                context.showMessage(message = loginResponse.errorCode)
             }
         }
     }
 
     private fun moveToMainScreen() {
+        preferencesStore.setTokenValid(context = requireContext())
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
         fragmentContainerActivityCallback?.closeActivity()

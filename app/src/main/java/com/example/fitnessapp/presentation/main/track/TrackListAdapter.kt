@@ -26,7 +26,7 @@ class TrackListAdapter(
         fun bind(track: TrackDbo) {
             beginDateTextView.text = track.beginTimeDateFormat
             distanceTextView.text = track.distance.toString()
-            durationTextView.text = track.durationInMinutes.toString()
+            durationTextView.text = track.durationInMinutes
             itemView.setOnClickListener {
                 onItemClickListener.onItemClick(track)
             }

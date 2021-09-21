@@ -2,14 +2,14 @@ package com.example.fitnessapp.presentation.splash
 
 import android.animation.ObjectAnimator
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.ImageView
+import androidx.appcompat.app.AppCompatActivity
 import androidx.core.animation.doOnEnd
-import com.example.fitnessapp.FitnessApp
-import com.example.fitnessapp.presentation.main.MainActivity
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
+import com.example.fitnessapp.presentation.main.MainActivity
 
 class SplashScreenActivity : AppCompatActivity() {
 
@@ -19,7 +19,7 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private lateinit var appLogo: ImageView
-    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private val preferencesStore = DependencyProvider.preferencesStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,7 +46,7 @@ class SplashScreenActivity : AppCompatActivity() {
     }
 
     private fun isUserAuthorized(): Boolean {
-        val token = preferencesStore.getAuthorizationToken()
+        val token = preferencesStore.getAuthorizationToken(context = this)
         return !token.isNullOrEmpty()
     }
 }

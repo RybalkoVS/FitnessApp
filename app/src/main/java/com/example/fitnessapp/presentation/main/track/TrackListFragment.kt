@@ -12,7 +12,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import bolts.Task
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.point.PointDbo
 import com.example.fitnessapp.data.model.point.PointDto
@@ -28,6 +28,10 @@ import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
 import com.example.fitnessapp.presentation.run.RunActivity
+import com.example.fitnessapp.setInvisible
+import com.example.fitnessapp.setVisible
+import com.example.fitnessapp.showMessage
+import com.example.fitnessapp.toPointDto
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 
 
@@ -56,12 +60,11 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private lateinit var noTracksTextView: TextView
     private lateinit var noTracksImageView: ImageView
     private var tracks = mutableListOf<TrackDbo>()
-    private var points = mutableListOf<PointDbo>()
+    private var points = mutableListOf<PointDto>()
     private val trackListAdapter = TrackListAdapter(tracks, this)
-    private val localRepository = FitnessApp.INSTANCE.localRepository
-    private val remoteRepository = FitnessApp.INSTANCE.remoteRepository
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
-    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
+    private val localRepository = DependencyProvider.localRepository
+    private val remoteRepository = DependencyProvider.remoteRepository
+    private val preferencesStore = DependencyProvider.preferencesStore
     private var scrollPosition = ADAPTER_START_POSITION
     private var isSynchronizing: Boolean = false
     private var isDataFetched: Boolean = false
@@ -115,10 +118,13 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun getTracksFromDb() {
         localRepository.getTracks().continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
+                val range = tracks.size
                 tracks.clear()
-                trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
+                if (range > ADAPTER_START_POSITION) {
+                    trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, range)
+                }
                 tracks.addAll(task.result)
                 tracks.sortByDescending { it.beginTime }
                 trackListAdapter.notifyItemRangeInserted(ADAPTER_START_POSITION, tracks.size)
@@ -137,19 +143,19 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             synchronizeDataWithServer()
             hideNoTracksLabel()
         } else {
-            hideProgress()
+            progressBar.setInvisible()
         }
     }
 
     private fun getTracksFromServer() {
         if (!isSynchronizing) {
-            showProgress()
+            progressBar.setVisible()
         }
         remoteRepository.getTracks(
-            TrackRequest(token = preferencesStore.getAuthorizationToken())
+            TrackRequest(token = preferencesStore.getAuthorizationToken(context = requireContext()))
         ).continueWith({ task ->
             if (task.error != null) {
-                toastProvider.showMessage(task.error.message.toString())
+                context.showMessage(task.error.message.toString())
             } else {
                 handleTracksServerResponse(task.result)
             }
@@ -162,9 +168,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
                 if (trackResponse.trackList.size > tracks.size) {
                     saveTracksInDb(trackResponse.trackList)
                 } else {
-                    hideProgress()
+                    updateListIfRefreshing()
+                    progressBar.setInvisible()
                 }
-                if (trackResponse.trackList.isEmpty()) {
+                if (trackResponse.trackList.isEmpty() && tracks.isEmpty()) {
                     showNoTracksLabel()
                 }
                 isDataFetched = true
@@ -176,24 +183,32 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         }
     }
 
+    private fun updateListIfRefreshing() {
+        if (swipeRefreshLayout.isRefreshing) {
+            getTracksFromDb()
+        }
+    }
+
     private fun saveTracksInDb(trackList: List<TrackDto>) {
         localRepository.insertTrackList(trackList).onSuccess {
             getTracksFromDb()
         }
         for (track in trackList) {
-            getTrackPointsFromServer(track.serverId)
+            track.serverId?.let {
+                getTrackPointsFromServer(it)
+            }
         }
     }
 
     private fun getTrackPointsFromServer(trackServerId: Int) {
         remoteRepository.getTrackPoints(
             PointRequest(
-                token = preferencesStore.getAuthorizationToken(),
+                token = preferencesStore.getAuthorizationToken(context = requireContext()),
                 trackId = trackServerId
             )
         ).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
                 handlePointsRequest(task.result, trackServerId)
             }
@@ -212,12 +227,11 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     }
 
     private fun savePoints(points: List<PointDto>, trackServerId: Int) {
-        var trackId: Int
         localRepository.getTrackIdByServerId(trackServerId).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
-                trackId = task.result
+                val trackId: Int = task.result
                 localRepository.insertPointList(points, trackId)
             }
         }
@@ -225,20 +239,21 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
 
     private fun checkResponseError(error: String) {
         if (error == INVALID_TOKEN_ERROR) {
-            preferencesStore.clearAuthorizationToken()
+            preferencesStore.clearAuthorizationToken(context = requireContext())
+            preferencesStore.setTokenExpired(context = requireContext())
             localRepository.clearDb()
             val intent = Intent(context, AuthorizationActivity::class.java)
             startActivity(intent)
             fragmentContainerActivityCallback?.closeActivity()
         } else {
-            toastProvider.showMessage(error)
+            context.showMessage(message = error)
         }
     }
 
     private fun synchronizeDataWithServer() {
         isSynchronizing = true
         for (track in tracks) {
-            if (track.serverId == null) {
+            if (track.serverId == 0) {
                 getTrackPoints(track)
             }
         }
@@ -246,16 +261,24 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     }
 
     private fun getTrackPoints(track: TrackDbo) {
-        localRepository.getTrackPoints(track.id).onSuccess {
-            points = it.result
+        localRepository.getTrackPoints(track.id).onSuccess { task ->
+            points = getPointsDtoFromDbo(task.result)
             saveTrackOnServer(track)
         }
+    }
+
+    private fun getPointsDtoFromDbo(pointList: List<PointDbo>): MutableList<PointDto> {
+        val pointDtoList = mutableListOf<PointDto>()
+        for (point in pointList) {
+            pointDtoList.add(point.toPointDto())
+        }
+        return pointDtoList
     }
 
     private fun saveTrackOnServer(track: TrackDbo) {
         remoteRepository.saveTrack(
             SaveTrackRequest(
-                token = preferencesStore.getAuthorizationToken(),
+                token = preferencesStore.getAuthorizationToken(context = requireContext()),
                 beginTime = track.beginTime,
                 duration = track.duration,
                 distance = track.distance,
@@ -263,7 +286,7 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             )
         ).continueWith { task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
                 handleSaveTrackResponse(task.result, track)
                 points.clear()
@@ -293,22 +316,14 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         startActivity(intent)
     }
 
-    private fun showProgress() {
-        progressBar.visibility = View.VISIBLE
-    }
-
-    private fun hideProgress() {
-        progressBar.visibility = View.INVISIBLE
-    }
-
     private fun showNoTracksLabel() {
-        noTracksTextView.visibility = View.VISIBLE
-        noTracksImageView.visibility = View.VISIBLE
+        noTracksTextView.setVisible()
+        noTracksImageView.setVisible()
     }
 
     private fun hideNoTracksLabel() {
-        noTracksTextView.visibility = View.INVISIBLE
-        noTracksImageView.visibility = View.INVISIBLE
+        noTracksTextView.setInvisible()
+        noTracksImageView.setInvisible()
     }
 
     override fun onItemClick(track: TrackDbo) {
@@ -337,15 +352,8 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         outState.putBundle(SAVED_STATE, arguments)
     }
 
-    override fun onDestroyView() {
-        tracks.clear()
-        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, tracks.size)
-        super.onDestroyView()
-    }
-
     override fun onDetach() {
         fragmentContainerActivityCallback = null
         super.onDetach()
     }
-
 }

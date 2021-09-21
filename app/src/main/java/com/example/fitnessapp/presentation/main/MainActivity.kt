@@ -12,7 +12,7 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentTransaction
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
@@ -33,8 +33,8 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private lateinit var logoutBtn: Button
     private lateinit var navigationView: NavigationView
-    private val preferencesStore = FitnessApp.INSTANCE.preferencesStore
-    private val localRepository = FitnessApp.INSTANCE.localRepository
+    private val preferencesStore = DependencyProvider.preferencesStore
+    private val localRepository = DependencyProvider.localRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
     }
 
     private fun onLogout() {
-        preferencesStore.clearAuthorizationToken()
+        preferencesStore.clearAuthorizationToken(context = this)
         localRepository.clearDb()
         moveToAuthorization()
     }
@@ -158,14 +158,14 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
         if (drawerToggle.onOptionsItemSelected(item)) {
-            return true;
+            return true
         }
-        return super.onOptionsItemSelected(item);
+        return super.onOptionsItemSelected(item)
     }
 
     override fun onBackPressed() {
         if (drawerLayout.isDrawerVisible(GravityCompat.START)) {
-            drawerLayout.closeDrawer(GravityCompat.START);
+            drawerLayout.closeDrawer(GravityCompat.START)
             return
         }
         if (supportFragmentManager.backStackEntryCount == MIN_BACK_STACK_SIZE) {

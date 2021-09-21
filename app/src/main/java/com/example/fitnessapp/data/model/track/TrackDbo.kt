@@ -2,16 +2,15 @@ package com.example.fitnessapp.data.model.track
 
 import android.os.Parcel
 import android.os.Parcelable
-import java.text.SimpleDateFormat
-import java.util.*
+import com.example.fitnessapp.DependencyProvider
 
 
 data class TrackDbo(
     var id: Int,
     var serverId: Int?,
-    val beginTime: Long,
-    val duration: Long,
-    val distance: Int
+    var beginTime: Long,
+    var duration: Long,
+    var distance: Int
 ) : Parcelable {
 
     val durationInMinutes: String
@@ -23,11 +22,7 @@ data class TrackDbo(
         }
 
     val beginTimeDateFormat: String
-        get() {
-            val sdf = SimpleDateFormat("yyyy-MM-dd' 'HH:mm", Locale.getDefault())
-            val date = Date(this.beginTime)
-            return sdf.format(date)
-        }
+        get() = DependencyProvider.dateTimeFormatter.dateWithTimeFormat.format(this.beginTime)
 
     constructor(parcel: Parcel) : this(
         parcel.readInt(),
@@ -35,8 +30,7 @@ data class TrackDbo(
         parcel.readLong(),
         parcel.readLong(),
         parcel.readInt()
-    ) {
-    }
+    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeInt(id)

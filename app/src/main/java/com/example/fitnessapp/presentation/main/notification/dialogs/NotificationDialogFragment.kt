@@ -11,14 +11,13 @@ import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.TimePicker
 import androidx.fragment.app.DialogFragment
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.getValue
 import com.example.fitnessapp.presentation.main.notification.NotificationListFragment
 import com.example.fitnessapp.presentation.main.notification.NotificationsFragmentCallback
-import java.text.DateFormat
-import java.text.SimpleDateFormat
+import com.example.fitnessapp.showMessage
 import java.util.*
 
 class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickListener,
@@ -36,7 +35,6 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
     private var dialogType: String? = null
     private var editableNotification: Notification? = null
     private var notificationsFragmentCallback: NotificationsFragmentCallback? = null
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
     private var calendar = Calendar.getInstance()
     private lateinit var dateEditText: EditText
     private lateinit var timeEditText: EditText
@@ -137,9 +135,9 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
 
     private fun onPositiveButtonClick() {
         if (isInputEmpty()) {
-            toastProvider.showMessage(message = getString(R.string.empty_fields_toast))
+            context.showMessage(message = getString(R.string.empty_fields_toast))
         } else if (!isTimeCorrect()) {
-            toastProvider.showMessage(message = getString(R.string.incorrect_time_error))
+            context.showMessage(message = getString(R.string.incorrect_time_error))
         } else {
             handlePositiveButtonClick()
         }
@@ -170,7 +168,7 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
             set(Calendar.MONTH, month)
             set(Calendar.DAY_OF_MONTH, dayOfMonth)
         }
-        val date = DateFormat.getDateInstance().format(calendar.time)
+        val date = DependencyProvider.dateTimeFormatter.dateFormat.format(calendar.time)
         dateEditText.setText(date)
     }
 
@@ -179,8 +177,7 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
             set(Calendar.HOUR_OF_DAY, hourOfDay)
             set(Calendar.MINUTE, minute)
         }
-        val sdf = SimpleDateFormat("HH:mm", Locale.getDefault())
-        val time = sdf.format(calendar.time)
+        val time = DependencyProvider.dateTimeFormatter.timeFormat.format(calendar.time)
         timeEditText.setText(time)
     }
 

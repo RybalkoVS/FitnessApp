@@ -11,11 +11,14 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import bolts.Task
-import com.example.fitnessapp.FitnessApp
+import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.main.notification.dialogs.NotificationDialogFragment
+import com.example.fitnessapp.setInvisible
+import com.example.fitnessapp.setVisible
+import com.example.fitnessapp.showMessage
 import com.google.android.material.floatingactionbutton.FloatingActionButton
 import java.util.*
 
@@ -46,8 +49,7 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
     private lateinit var noNotificationsTextView: TextView
     private var notifications = mutableListOf<Notification>()
     private var alarmManager: AlarmManager? = null
-    private val localRepository = FitnessApp.INSTANCE.localRepository
-    private val toastProvider = FitnessApp.INSTANCE.toastProvider
+    private val localRepository = DependencyProvider.localRepository
     private var scrollPosition = ADAPTER_START_POSITION
     private var selectedNotificationId: Int = DEFAULT_SELECTED_ITEM_ID
 
@@ -97,7 +99,7 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
     private fun getNotifications() {
         localRepository.getNotifications().continueWith { task ->
             if (task.error != null) {
-                toastProvider.showMessage(message = task.error.message.toString())
+                context.showMessage(message = task.error.message.toString())
             } else {
                 handleNotificationsResult(task.result)
             }
@@ -113,12 +115,8 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
             )
             recyclerViewNotifications.scrollToPosition(scrollPosition)
         } else {
-            showNoNotificationsLabel()
+            noNotificationsTextView.setVisible()
         }
-    }
-
-    private fun showNoNotificationsLabel() {
-        noNotificationsTextView.visibility = View.VISIBLE
     }
 
     private fun onAddNotification() {
@@ -130,12 +128,8 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
     }
 
     override fun addNotification(calendar: Calendar) {
-        hideNoNotificationsLabel()
+        noNotificationsTextView.setInvisible()
         saveNotification(calendar.timeInMillis)
-    }
-
-    private fun hideNoNotificationsLabel() {
-        noNotificationsTextView.visibility = View.INVISIBLE
     }
 
     private fun saveNotification(date: Long) {
@@ -194,7 +188,7 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
         notifications.remove(notification)
         notificationListAdapter.notifyItemRemoved(position)
         if (notifications.isEmpty()) {
-            showNoNotificationsLabel()
+            noNotificationsTextView.setVisible()
         }
     }
 

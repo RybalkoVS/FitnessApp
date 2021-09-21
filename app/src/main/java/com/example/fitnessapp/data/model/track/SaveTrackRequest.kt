@@ -1,6 +1,6 @@
 package com.example.fitnessapp.data.model.track
 
-import com.example.fitnessapp.data.model.point.PointDbo
+import com.example.fitnessapp.data.model.point.PointDto
 import com.google.gson.annotations.SerializedName
 
 data class SaveTrackRequest(
@@ -15,5 +15,5 @@ data class SaveTrackRequest(
     @SerializedName("distance")
     val distance: Int,
     @SerializedName("points")
-    val points: List<PointDbo>
+    val points: List<PointDto>
 )

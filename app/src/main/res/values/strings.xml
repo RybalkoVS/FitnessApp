@@ -14,6 +14,8 @@
     <string name="no_callback_implementation_error">must implement callback</string>
     <string name="empty_fields_toast">Fill all fields</string>
     <string name="incorrect_email_or_password_toast">Incorrect email or password</string>
+    <string name="authorization_token_invalid">Authorization token error</string>
+    <string name="authorization_token_expired">Authorization token expired</string>
 
     <!--nav drawer    -->
     <string name="drawer_open">drawer open</string>
@@ -49,5 +51,13 @@
     <string name="finish_btn_text">FINISH</string>
     <string name="back_to_main_btn_text">Back to main</string>
     <string name="results_label">Results</string>
+    <string name="finish_run_message">Finish run first</string>
+    <string name="twice_denied_permission_title">Necessary permission was denied twice!</string>
+    <string name="twice_denied_permission_message">To access screen apply location permissions in device system settings</string>
+    <string name="btn_ok_text">OK</string>
+    <string name="no_location_permissions">No location permissions!</string>
+    <string name="no_location_permissions_message">Need to apply location permissions for saving tracks</string>
+    <string name="btn_apply_text">Apply</string>
+    <string name="enable_gps_message">Enable GPS to start</string>
 
 </resources>
