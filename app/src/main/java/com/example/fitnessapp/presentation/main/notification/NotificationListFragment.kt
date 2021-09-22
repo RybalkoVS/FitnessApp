@@ -15,6 +15,7 @@ import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
+import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.presentation.main.notification.dialogs.NotificationDialogFragment
 import com.example.fitnessapp.setInvisible
 import com.example.fitnessapp.setVisible
@@ -55,10 +56,10 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivityCallback) {
-            fragmentContainerActivityCallback = context
-        } else {
-            throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
+        try {
+            fragmentContainerActivityCallback = context as MainActivity
+        } catch (e: ClassCastException) {
+            throw ClassCastException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
     }
 
@@ -97,13 +98,13 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
     }
 
     private fun getNotifications() {
-        localRepository.getNotifications().continueWith { task ->
+        localRepository.getNotifications().continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = task.error.message.toString())
             } else {
                 handleNotificationsResult(task.result)
             }
-        }
+        }, Task.UI_THREAD_EXECUTOR)
     }
 
     private fun handleNotificationsResult(notificationsList: List<Notification>) {
@@ -218,5 +219,4 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
         fragmentContainerActivityCallback = null
         super.onDetach()
     }
-
 }

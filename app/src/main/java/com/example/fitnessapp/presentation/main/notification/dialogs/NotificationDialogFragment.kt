@@ -11,7 +11,7 @@ import android.widget.DatePicker
 import android.widget.EditText
 import android.widget.TimePicker
 import androidx.fragment.app.DialogFragment
-import com.example.fitnessapp.DependencyProvider
+import com.example.fitnessapp.DateTimeFormatter
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.notification.Notification
 import com.example.fitnessapp.getValue
@@ -135,9 +135,9 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
 
     private fun onPositiveButtonClick() {
         if (isInputEmpty()) {
-            context.showMessage(message = getString(R.string.empty_fields_toast))
+            requireContext().showMessage(message = getString(R.string.empty_fields_toast))
         } else if (!isTimeCorrect()) {
-            context.showMessage(message = getString(R.string.incorrect_time_error))
+            requireContext().showMessage(message = getString(R.string.incorrect_time_error))
         } else {
             handlePositiveButtonClick()
         }
@@ -168,7 +168,7 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
             set(Calendar.MONTH, month)
             set(Calendar.DAY_OF_MONTH, dayOfMonth)
         }
-        val date = DependencyProvider.dateTimeFormatter.dateFormat.format(calendar.time)
+        val date = DateTimeFormatter.dateFormat.format(calendar.time)
         dateEditText.setText(date)
     }
 
@@ -177,7 +177,7 @@ class NotificationDialogFragment : DialogFragment(), DialogInterface.OnClickList
             set(Calendar.HOUR_OF_DAY, hourOfDay)
             set(Calendar.MINUTE, minute)
         }
-        val time = DependencyProvider.dateTimeFormatter.timeFormat.format(calendar.time)
+        val time = DateTimeFormatter.timeFormat.format(calendar.time)
         timeEditText.setText(time)
     }
 

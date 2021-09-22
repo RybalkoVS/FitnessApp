@@ -36,7 +36,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private val authDataValidator = AuthorizationDataValidator()
     private val remoteRepository = DependencyProvider.remoteRepository
-    private val preferencesStore = DependencyProvider.preferencesStore
+    private val preferencesRepository = DependencyProvider.preferencesRepository
     private lateinit var loginBtn: Button
     private lateinit var moveToRegisterBtn: Button
     private lateinit var emailEditText: EditText
@@ -44,10 +44,10 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivityCallback) {
-            fragmentContainerActivityCallback = context
-        } else {
-            throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
+        try {
+            fragmentContainerActivityCallback = context as AuthorizationActivity
+        } catch (e: ClassCastException) {
+            throw ClassCastException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
     }
 
@@ -56,7 +56,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
         initViews(view)
         moveToRegisterBtn.paintFlags = Paint.UNDERLINE_TEXT_FLAG
 
-        if (preferencesStore.isTokenExpired(context = requireContext())) {
+        if (preferencesRepository.isTokenExpired(context = requireContext())) {
             showExplanationDialog()
         }
 
@@ -84,7 +84,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             childFragmentManager,
             AuthorizationTokenExpiredDialog.TAG
         )
-        preferencesStore.setTokenValid(context = requireContext())
+        preferencesRepository.setTokenValid(context = requireContext())
     }
 
     private fun checkEmptyInput() {
@@ -93,7 +93,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
                 passwordEditText.getValue()
             )
         ) {
-            context.showMessage(message = getString(R.string.empty_fields_toast))
+            requireContext().showMessage(message = getString(R.string.empty_fields_toast))
         } else {
             sendLoginRequest()
         }
@@ -107,7 +107,7 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = getString(R.string.no_internet_connection_error))
             } else {
                 checkEnteredData(task.result)
             }
@@ -117,20 +117,20 @@ class LoginFragment : Fragment(R.layout.fragment_login) {
     private fun checkEnteredData(loginResponse: LoginResponse) {
         when (loginResponse.status) {
             ResponseStatus.OK.toString() -> {
-                preferencesStore.saveAuthorizationToken(
+                preferencesRepository.saveAuthorizationToken(
                     context = requireContext(),
                     token = loginResponse.token
                 )
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                context.showMessage(message = loginResponse.errorCode)
+                requireContext().showMessage(message = loginResponse.errorCode)
             }
         }
     }
 
     private fun moveToMainScreen() {
-        preferencesStore.setTokenValid(context = requireContext())
+        preferencesRepository.setTokenValid(context = requireContext())
         val intent = Intent(context, MainActivity::class.java)
         startActivity(intent)
         fragmentContainerActivityCallback?.closeActivity()

@@ -6,7 +6,6 @@ import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
 import android.content.pm.PackageManager
-import android.location.Location
 import android.location.LocationManager
 import android.os.Bundle
 import android.view.View
@@ -16,10 +15,15 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.app.ActivityCompat
+import bolts.Task
 import com.example.fitnessapp.DependencyProvider
 import com.example.fitnessapp.R
 import com.example.fitnessapp.data.model.point.PointDto
+import com.example.fitnessapp.data.model.track.SaveTrackRequest
+import com.example.fitnessapp.data.model.track.SaveTrackResponse
 import com.example.fitnessapp.data.model.track.TrackDto
+import com.example.fitnessapp.data.network.ResponseStatus
+import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
 import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.presentation.run.dialogs.PermissionsNotGrantedDialog
 import com.example.fitnessapp.presentation.run.dialogs.TwiceDeniedPermissionDialog
@@ -27,12 +31,14 @@ import com.example.fitnessapp.setDisabled
 import com.example.fitnessapp.setEnabled
 import com.example.fitnessapp.showMessage
 
+
 class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
-    RunActivityCallback, PointReceiver.OnPointReceivedListener {
+    RunActivityCallback, TrackInfoReceiver.OnTrackInfoReceivedListener {
 
     companion object {
         private const val TIMER_TICK_LENGTH = 10L
         private const val LOCATION_PERMISSIONS_REQUEST_CODE = 1
+        private const val MIN_TRACK_POINTS = 2
     }
 
     private lateinit var startBtn: Button
@@ -48,19 +54,23 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
     private var isPermissionsGranted = true
     private val fineLocationPermission = Manifest.permission.ACCESS_FINE_LOCATION
     private val coarseLocationPermission = Manifest.permission.ACCESS_COARSE_LOCATION
-    private val preferencesStore = DependencyProvider.preferencesStore
+    private val preferencesRepository = DependencyProvider.preferencesRepository
     private val localRepository = DependencyProvider.localRepository
     private val remoteRepository = DependencyProvider.remoteRepository
     private val points = mutableListOf<PointDto>()
     private var trackBeginTime: Long = 0L
     private var trackDistance: Int = 0
     private var trackDuration: Long = 0L
-    private var pointReceiver = PointReceiver()
+    private var trackId = 0
+    private var trackInfoReceiver = TrackInfoReceiver()
     private var isGpsTrackingStopped = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_run)
+        if (isTaskRoot) {
+            checkAuthorizationToken()
+        }
         initViews()
 
         checkPermissions()
@@ -75,8 +85,24 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
             onBackToMain()
         }
         timer.setTimerTickListener(this)
-        pointReceiver.setOnPointReceivedListener(this)
-        registerReceiver(pointReceiver, IntentFilter(LocationService.BROADCAST_ACTION_SEND_POINT))
+        trackInfoReceiver.setOnTrackInfoReceivedListener(this)
+        registerReceiver(
+            trackInfoReceiver,
+            IntentFilter(LocationService.BROADCAST_ACTION_SEND_TRACK_INFO)
+        )
+    }
+
+    private fun checkAuthorizationToken() {
+        val token = preferencesRepository.getAuthorizationToken(context = this)
+        if (token.isNullOrEmpty()) {
+            moveToLogin()
+        }
+    }
+
+    private fun moveToLogin() {
+        val intent = Intent(this, AuthorizationActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     private fun initViews() {
@@ -109,7 +135,7 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
     }
 
     private fun checkIfLocationPermissionsWereDeniedBefore() {
-        if (preferencesStore.isLocationPermissionDeniedTwice(context = this)) {
+        if (preferencesRepository.isLocationPermissionDeniedTwice(context = this)) {
             TwiceDeniedPermissionDialog().show(
                 supportFragmentManager, TwiceDeniedPermissionDialog.TAG
             )
@@ -171,7 +197,7 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
 
     private fun closeActivityIfPermissionsNotGranted() {
         if (!isPermissionsGranted) {
-            preferencesStore.updateDeniedLocationPermissionCounter(context = this)
+            preferencesRepository.updateDeniedLocationPermissionCounter(context = this)
             onBackToMain()
         }
     }
@@ -189,19 +215,15 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
 
     private fun isGPSProviderAvailable(): Boolean {
         val locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val isAvailable = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
-        if (!isAvailable) {
-            this.showMessage(getString(R.string.enable_gps_message))
-        }
-        return isAvailable
+        return locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
     private fun animateTransition(frontView: View, backView: View) {
-        val flipInAnimator = AnimatorInflater.loadAnimator(this, R.animator.flip_in)
+        val flipInAnimator = AnimatorInflater.loadAnimator(this, R.animator.anim_flip_in)
         flipInAnimator.setTarget(frontView)
         flipInAnimator.start()
         frontView.cameraDistance = 10f * frontView.width
-        val flipOutAnimator = AnimatorInflater.loadAnimator(this, R.animator.flip_out)
+        val flipOutAnimator = AnimatorInflater.loadAnimator(this, R.animator.anim_flip_out)
         flipOutAnimator.setTarget(backView)
         flipOutAnimator.start()
     }
@@ -218,32 +240,18 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
     }
 
     private fun onFinishRun() {
-        trackDistance = calculateDistance(points)
         trackDuration = timer.getTickInMillis()
         animateTransition(frontView = runStartedLayout, backView = runFinishedLayout)
         finishBtn.setDisabled()
         backToMainBtn.setEnabled()
-        stopTimer()
-        stoppedTimerTextView.text = timer.getTicksInTimeFormat()
-        distanceTextView.text = trackDistance.toString()
         stopGpsTracking()
-        saveTrackInDb()
+        stopTimer()
     }
 
-    private fun calculateDistance(points: List<PointDto>): Int {
-        val distance = floatArrayOf(0.0f)
-        for ((index, point) in points.withIndex()) {
-            if (index != points.size - 1) {
-                Location.distanceBetween(
-                    point.latitude,
-                    point.longitude,
-                    points[index + 1].latitude,
-                    points[index + 1].longitude,
-                    distance
-                )
-            }
-        }
-        return distance.sum().toInt()
+    private fun stopGpsTracking() {
+        isGpsTrackingStopped = true
+        val locationServiceIntent = Intent(this, LocationService::class.java)
+        stopService(locationServiceIntent)
     }
 
     private fun stopTimer() {
@@ -251,11 +259,21 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
         isTimerStopped = true
     }
 
-    private fun stopGpsTracking() {
-        isGpsTrackingStopped = true
-        val locationServiceIntent = Intent(this, LocationService::class.java)
-        stopService(locationServiceIntent)
-        unregisterReceiver(pointReceiver)
+    override fun onTrackInfoReceived(receivedPoints: List<PointDto>, distance: Int) {
+        trackDistance = distance
+        setupResultsLayout()
+        if (receivedPoints.size >= MIN_TRACK_POINTS) {
+            points.addAll(receivedPoints)
+            saveTrackInDb()
+        } else {
+            showMessage(message = getString(R.string.no_points_error))
+        }
+        unregisterReceiver(trackInfoReceiver)
+    }
+
+    private fun setupResultsLayout() {
+        stoppedTimerTextView.text = timer.getTicksInTimeFormat()
+        distanceTextView.text = trackDistance.toString()
     }
 
     private fun saveTrackInDb() {
@@ -265,18 +283,51 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
             duration = trackDuration
         )
         localRepository.insertTrackList(listOf(track)).onSuccess {
-            getLastTrackFromDb()
+            getLastTrackIdFromDb()
         }
     }
 
-    private fun getLastTrackFromDb() {
+    private fun getLastTrackIdFromDb() {
         localRepository.getLastTrackId().onSuccess { task ->
-            savePoints(task.result)
+            trackId = task.result
+            savePoints(trackId)
         }
     }
 
     private fun savePoints(trackId: Int) {
-        localRepository.insertPointList(points, trackId)
+        localRepository.insertPointList(points, trackId).onSuccess {
+            saveTrackOnServer()
+        }
+    }
+
+    private fun saveTrackOnServer() {
+        remoteRepository.saveTrack(
+            saveTrackRequest = SaveTrackRequest(
+                token = preferencesRepository.getAuthorizationToken(context = this),
+                beginTime = trackBeginTime,
+                duration = trackDuration,
+                distance = trackDistance,
+                points = points
+            )
+        ).continueWith({ task ->
+            if (task.error != null) {
+                showMessage(message = getString(R.string.no_internet_connection_error))
+            } else {
+                handleSaveTrackResponse(task.result)
+            }
+        }, Task.UI_THREAD_EXECUTOR)
+    }
+
+
+    private fun handleSaveTrackResponse(saveTrackResponse: SaveTrackResponse) {
+        when (saveTrackResponse.status) {
+            ResponseStatus.OK.toString() -> {
+                localRepository.updateTrackServerId(trackId, saveTrackResponse.serverId)
+            }
+            ResponseStatus.ERROR.toString() -> {
+                showMessage(message = saveTrackResponse.errorCode)
+            }
+        }
     }
 
     override fun onBackToMain() {
@@ -297,22 +348,18 @@ class RunActivity : AppCompatActivity(), CountUpTimer.OnTimerTickListener,
         runningTimerTextView.text = timer.getTicksInTimeFormat()
     }
 
-    override fun onPointReceived(point: PointDto) {
-        points.add(point)
-    }
-
     override fun onDestroy() {
-        super.onDestroy()
         if (!isGpsTrackingStopped) {
             stopGpsTracking()
         }
+        super.onDestroy()
     }
 
     override fun onBackPressed() {
         if (isTimerStopped) {
             super.onBackPressed()
         } else {
-            this.showMessage(message = getString(R.string.finish_run_message))
+            showMessage(message = getString(R.string.finish_run_message))
         }
     }
 

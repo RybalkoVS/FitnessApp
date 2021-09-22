@@ -38,7 +38,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private var fragmentContainerActivityCallback: FragmentContainerActivityCallback? = null
     private val autDataValidator = AuthorizationDataValidator()
     private val remoteRepository = DependencyProvider.remoteRepository
-    private val preferencesStore = DependencyProvider.preferencesStore
+    private val preferencesRepository = DependencyProvider.preferencesRepository
     private lateinit var registerBtn: Button
     private lateinit var moveToLoginBtn: Button
     private lateinit var emailEditText: EditText
@@ -49,10 +49,10 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivityCallback) {
-            fragmentContainerActivityCallback = context
-        } else {
-            throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
+        try {
+            fragmentContainerActivityCallback = context as AuthorizationActivity
+        } catch (e: ClassCastException) {
+            throw ClassCastException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
     }
 
@@ -92,7 +92,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
                 repeatPasswordEditText.getValue()
             )
         ) {
-            context.showMessage(getString(R.string.empty_fields_toast))
+            requireContext().showMessage(getString(R.string.empty_fields_toast))
         } else {
             checkEnteredData()
         }
@@ -107,7 +107,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         if (isDataValid) {
             sendRegisterRequest()
         } else {
-            context.showMessage(message = getString(R.string.incorrect_email_or_password_toast))
+            requireContext().showMessage(message = getString(R.string.incorrect_email_or_password_toast))
         }
     }
 
@@ -121,7 +121,7 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
             )
         ).continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = getString(R.string.no_internet_connection_error))
             } else {
                 checkRegisterResponse(task.result)
             }
@@ -131,14 +131,14 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
     private fun checkRegisterResponse(registrationResponse: RegistrationResponse) {
         when (registrationResponse.status) {
             ResponseStatus.OK.toString() -> {
-                preferencesStore.saveAuthorizationToken(
+                preferencesRepository.saveAuthorizationToken(
                     context = requireContext(),
                     token = registrationResponse.token
                 )
                 moveToMainScreen()
             }
             ResponseStatus.ERROR.toString() -> {
-                context.showMessage(message = registrationResponse.errorCode)
+                requireContext().showMessage(message = registrationResponse.errorCode)
             }
         }
     }
@@ -183,6 +183,4 @@ class RegisterFragment : Fragment(R.layout.fragment_register) {
         fragmentContainerActivityCallback = null
         super.onDetach()
     }
-
-
 }

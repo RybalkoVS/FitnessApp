@@ -99,7 +99,7 @@ class TrackFragment : Fragment(R.layout.fragment_track), OnMapReadyCallback {
         return track?.let {
             localRepository.getTrackPoints(it.id).continueWith { task ->
                 if (task.error != null) {
-                    context.showMessage(message = task.error.message.toString())
+                    requireContext().showMessage(message = task.error.message.toString())
                 } else {
                     points.clear()
                     points.addAll(task.result)

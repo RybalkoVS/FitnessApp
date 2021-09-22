@@ -59,5 +59,7 @@
     <string name="no_location_permissions_message">Need to apply location permissions for saving tracks</string>
     <string name="btn_apply_text">Apply</string>
     <string name="enable_gps_message">Enable GPS to start</string>
+    <string name="no_internet_connection_error">No internet connection. Can\'t save track on server.</string>
+    <string name="no_points_error">Track wasn\'t saved, because of no points.</string>
 
 </resources>

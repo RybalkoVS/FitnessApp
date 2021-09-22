@@ -2,7 +2,7 @@ package com.example.fitnessapp.data.model.notification
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.fitnessapp.DependencyProvider
+import com.example.fitnessapp.DateTimeFormatter
 
 data class Notification(
     var id: Int,
@@ -10,10 +10,10 @@ data class Notification(
 ) : Parcelable {
 
     val time: String
-        get() = DependencyProvider.dateTimeFormatter.timeFormat.format(this.date)
+        get() = DateTimeFormatter.timeFormat.format(this.date)
 
     val dateInDateFormat: String
-        get() = DependencyProvider.dateTimeFormatter.dateFormat.format(this.date)
+        get() = DateTimeFormatter.dateFormat.format(this.date)
 
 
     constructor(parcel: Parcel) : this(

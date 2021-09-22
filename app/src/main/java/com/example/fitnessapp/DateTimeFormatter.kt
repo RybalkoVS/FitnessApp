@@ -3,9 +3,9 @@ package com.example.fitnessapp
 import java.text.SimpleDateFormat
 import java.util.*
 
-class DateTimeFormatter {
+object DateTimeFormatter {
 
-    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault())
-    val timeFormat = SimpleDateFormat("HH:mm", Locale.getDefault())
-    val dateWithTimeFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm", Locale.getDefault())
+    val dateFormat = SimpleDateFormat("yyyy-MM-dd", Locale.US)
+    val timeFormat = SimpleDateFormat("HH:mm", Locale.US)
+    val dateWithTimeFormat = SimpleDateFormat("yyyy-MM-dd' 'HH:mm", Locale.US)
 }

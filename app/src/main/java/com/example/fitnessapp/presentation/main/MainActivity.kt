@@ -33,7 +33,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
     private lateinit var drawerToggle: ActionBarDrawerToggle
     private lateinit var logoutBtn: Button
     private lateinit var navigationView: NavigationView
-    private val preferencesStore = DependencyProvider.preferencesStore
+    private val preferencesRepository = DependencyProvider.preferencesRepository
     private val localRepository = DependencyProvider.localRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,7 +76,7 @@ class MainActivity : AppCompatActivity(), FragmentContainerActivityCallback {
     }
 
     private fun onLogout() {
-        preferencesStore.clearAuthorizationToken(context = this)
+        preferencesRepository.clearAuthorizationToken(context = this)
         localRepository.clearDb()
         moveToAuthorization()
     }

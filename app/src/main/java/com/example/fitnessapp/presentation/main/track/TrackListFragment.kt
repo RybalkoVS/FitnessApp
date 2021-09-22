@@ -27,6 +27,7 @@ import com.example.fitnessapp.data.model.track.TrackResponse
 import com.example.fitnessapp.data.network.ResponseStatus
 import com.example.fitnessapp.presentation.FragmentContainerActivityCallback
 import com.example.fitnessapp.presentation.authorization.AuthorizationActivity
+import com.example.fitnessapp.presentation.main.MainActivity
 import com.example.fitnessapp.presentation.run.RunActivity
 import com.example.fitnessapp.setInvisible
 import com.example.fitnessapp.setVisible
@@ -42,7 +43,6 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         const val TAG = "TRACK_LIST_FRAGMENT"
         private const val ADAPTER_START_POSITION = 0
         private const val REFRESHING_FLAG = "REFRESHING"
-        private const val DATA_FETCHING_FLAG = "DATA_FETCHING"
         private const val SCROLL_POSITION = "SCROLL_POSITION"
         private const val INVALID_TOKEN_ERROR = "INVALID_TOKEN"
         private const val SAVED_STATE = "SAVED_STATE"
@@ -64,17 +64,16 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private val trackListAdapter = TrackListAdapter(tracks, this)
     private val localRepository = DependencyProvider.localRepository
     private val remoteRepository = DependencyProvider.remoteRepository
-    private val preferencesStore = DependencyProvider.preferencesStore
+    private val preferencesRepository = DependencyProvider.preferencesRepository
     private var scrollPosition = ADAPTER_START_POSITION
     private var isSynchronizing: Boolean = false
-    private var isDataFetched: Boolean = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        if (context is FragmentContainerActivityCallback) {
-            fragmentContainerActivityCallback = context
-        } else {
-            throw RuntimeException(context.toString() + getString(R.string.no_callback_implementation_error))
+        try {
+            fragmentContainerActivityCallback = context as MainActivity
+        } catch (e: ClassCastException) {
+            throw ClassCastException(context.toString() + getString(R.string.no_callback_implementation_error))
         }
     }
 
@@ -85,7 +84,8 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
         savedInstanceState?.let {
             arguments = it.getBundle(SAVED_STATE)
             restoreState(arguments)
-        } ?: getTracksFromDb()
+        }
+        getTracksFromDb()
 
         swipeRefreshLayout.setOnRefreshListener {
             onSwipeRefresh()
@@ -109,53 +109,45 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun restoreState(bundle: Bundle?) {
         bundle?.let {
             swipeRefreshLayout.isRefreshing = it.getBoolean(REFRESHING_FLAG)
-            isDataFetched = it.getBoolean(DATA_FETCHING_FLAG)
             scrollPosition = it.getInt(SCROLL_POSITION)
         }
-        getTracksFromDb()
     }
 
     private fun getTracksFromDb() {
-        localRepository.getTracks().continueWith({ task ->
-            if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
-            } else {
-                val range = tracks.size
-                tracks.clear()
-                if (range > ADAPTER_START_POSITION) {
-                    trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, range)
+        if (tracks.isEmpty()) {
+            localRepository.getTracks().continueWith({ task ->
+                if (task.error != null) {
+                    requireContext().showMessage(message = task.error.message.toString())
+                } else {
+                    swipeRefreshLayout.isRefreshing = false
+                    progressBar.setInvisible()
+                    isSynchronizing = false
+                    tracks.addAll(task.result)
+                    tracks.sortByDescending { it.beginTime }
+                    trackListAdapter.notifyItemRangeInserted(ADAPTER_START_POSITION, tracks.size)
+                    trackListRecyclerView.scrollToPosition(scrollPosition)
+                    checkTracks()
                 }
-                tracks.addAll(task.result)
-                tracks.sortByDescending { it.beginTime }
-                trackListAdapter.notifyItemRangeInserted(ADAPTER_START_POSITION, tracks.size)
-                trackListRecyclerView.scrollToPosition(scrollPosition)
-                checkTracks(tracks)
-            }
-        }, Task.UI_THREAD_EXECUTOR)
+            }, Task.UI_THREAD_EXECUTOR)
+        }
     }
 
-    private fun checkTracks(trackList: List<TrackDbo>) {
-        if (trackList.isEmpty() && !isDataFetched) {
-            getTracksFromServer()
-        } else if (trackList.isEmpty() && isDataFetched) {
-            showNoTracksLabel()
-        } else if (trackList.isNotEmpty() && !isDataFetched) {
-            synchronizeDataWithServer()
-            hideNoTracksLabel()
+    private fun checkTracks() {
+        if (tracks.isEmpty()) {
+            progressBar.setVisible()
         } else {
-            progressBar.setInvisible()
+            isSynchronizing = true
+            hideNoTracksLabel()
         }
+        getTracksFromServer()
     }
 
     private fun getTracksFromServer() {
-        if (!isSynchronizing) {
-            progressBar.setVisible()
-        }
         remoteRepository.getTracks(
-            TrackRequest(token = preferencesStore.getAuthorizationToken(context = requireContext()))
+            TrackRequest(token = preferencesRepository.getAuthorizationToken(context = requireContext()))
         ).continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(task.error.message.toString())
+                requireContext().showMessage(task.error.message.toString())
             } else {
                 handleTracksServerResponse(task.result)
             }
@@ -167,25 +159,14 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             ResponseStatus.OK.toString() -> {
                 if (trackResponse.trackList.size > tracks.size) {
                     saveTracksInDb(trackResponse.trackList)
-                } else {
-                    updateListIfRefreshing()
-                    progressBar.setInvisible()
                 }
                 if (trackResponse.trackList.isEmpty() && tracks.isEmpty()) {
                     showNoTracksLabel()
                 }
-                isDataFetched = true
-                swipeRefreshLayout.isRefreshing = false
             }
             ResponseStatus.ERROR.toString() -> {
                 checkResponseError(trackResponse.errorCode)
             }
-        }
-    }
-
-    private fun updateListIfRefreshing() {
-        if (swipeRefreshLayout.isRefreshing) {
-            getTracksFromDb()
         }
     }
 
@@ -203,12 +184,12 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun getTrackPointsFromServer(trackServerId: Int) {
         remoteRepository.getTrackPoints(
             PointRequest(
-                token = preferencesStore.getAuthorizationToken(context = requireContext()),
+                token = preferencesRepository.getAuthorizationToken(context = requireContext()),
                 trackId = trackServerId
             )
         ).continueWith { task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = task.error.message.toString())
             } else {
                 handlePointsRequest(task.result, trackServerId)
             }
@@ -227,27 +208,36 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     }
 
     private fun savePoints(points: List<PointDto>, trackServerId: Int) {
-        localRepository.getTrackIdByServerId(trackServerId).continueWith { task ->
+        localRepository.getTrackIdByServerId(trackServerId).continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = task.error.message.toString())
             } else {
                 val trackId: Int = task.result
                 localRepository.insertPointList(points, trackId)
             }
-        }
+        }, Task.UI_THREAD_EXECUTOR)
     }
 
     private fun checkResponseError(error: String) {
         if (error == INVALID_TOKEN_ERROR) {
-            preferencesStore.clearAuthorizationToken(context = requireContext())
-            preferencesStore.setTokenExpired(context = requireContext())
-            localRepository.clearDb()
-            val intent = Intent(context, AuthorizationActivity::class.java)
-            startActivity(intent)
-            fragmentContainerActivityCallback?.closeActivity()
+            logOutWithExplanationDialog()
         } else {
-            context.showMessage(message = error)
+            requireContext().showMessage(message = error)
         }
+    }
+
+    private fun logOutWithExplanationDialog() {
+        preferencesRepository.clearAuthorizationToken(context = requireContext())
+        preferencesRepository.setTokenExpired(context = requireContext())
+        localRepository.clearDb()
+        val intent = Intent(context, AuthorizationActivity::class.java)
+        startActivity(intent)
+        fragmentContainerActivityCallback?.closeActivity()
+    }
+
+    private fun onSwipeRefresh() {
+        swipeRefreshLayout.isRefreshing = true
+        synchronizeDataWithServer()
     }
 
     private fun synchronizeDataWithServer() {
@@ -257,7 +247,10 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
                 getTrackPoints(track)
             }
         }
-        getTracksFromServer()
+        val range = tracks.size
+        tracks.clear()
+        trackListAdapter.notifyItemRangeRemoved(ADAPTER_START_POSITION, range)
+        getTracksFromDb()
     }
 
     private fun getTrackPoints(track: TrackDbo) {
@@ -278,37 +271,31 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
     private fun saveTrackOnServer(track: TrackDbo) {
         remoteRepository.saveTrack(
             SaveTrackRequest(
-                token = preferencesStore.getAuthorizationToken(context = requireContext()),
+                token = preferencesRepository.getAuthorizationToken(context = requireContext()),
                 beginTime = track.beginTime,
                 duration = track.duration,
                 distance = track.distance,
                 points = points.toList()
             )
-        ).continueWith { task ->
+        ).continueWith({ task ->
             if (task.error != null) {
-                context.showMessage(message = task.error.message.toString())
+                requireContext().showMessage(message = getString(R.string.no_internet_connection_error))
             } else {
-                handleSaveTrackResponse(task.result, track)
+                handleSaveTrackResponse(task.result, track.id)
                 points.clear()
             }
-        }
+        }, Task.UI_THREAD_EXECUTOR)
     }
 
-    private fun handleSaveTrackResponse(saveTrackResponse: SaveTrackResponse, track: TrackDbo) {
+    private fun handleSaveTrackResponse(saveTrackResponse: SaveTrackResponse, trackId: Int) {
         when (saveTrackResponse.status) {
             ResponseStatus.OK.toString() -> {
-                track.serverId = saveTrackResponse.serverId
-                localRepository.updateTrack(track)
+                localRepository.updateTrackServerId(trackId, saveTrackResponse.serverId)
             }
             ResponseStatus.ERROR.toString() -> {
                 checkResponseError(saveTrackResponse.errorCode)
             }
         }
-    }
-
-    private fun onSwipeRefresh() {
-        swipeRefreshLayout.isRefreshing = true
-        synchronizeDataWithServer()
     }
 
     private fun onAddTrack() {
@@ -342,7 +329,6 @@ class TrackListFragment : Fragment(R.layout.fragment_track_list),
             (trackListRecyclerView.layoutManager as LinearLayoutManager).findFirstVisibleItemPosition()
         arguments?.apply {
             putBoolean(REFRESHING_FLAG, swipeRefreshLayout.isRefreshing)
-            putBoolean(DATA_FETCHING_FLAG, isDataFetched)
             putInt(SCROLL_POSITION, scrollPosition)
         }
     }

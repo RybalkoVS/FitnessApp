@@ -13,6 +13,7 @@ import android.location.LocationManager
 import android.os.Build
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
+import com.example.fitnessapp.R
 
 
 class LocationService : Service(), LocationListener {
@@ -26,13 +27,17 @@ class LocationService : Service(), LocationListener {
         private const val NOTIFICATION_CHANNEL_ID = "FitnessApp"
         private const val NOTIFICATION_CHANNEL_NAME = "FitnessAppChannel"
         private const val NOTIFICATION_CHANNEL_DESCRIPTION = "Channel for location service"
-        const val BROADCAST_ACTION_SEND_POINT = "SEND_POINT"
-        const val LATITUDE = "LATITUDE"
-        const val LONGITUDE = "LONGITUDE"
+        const val BROADCAST_ACTION_SEND_TRACK_INFO = "SEND_TRACK_INFO"
+        const val ALL_POINTS = "ALL_POINTS"
+        const val DISTANCE = "DISTANCE"
     }
 
     private lateinit var locationManager: LocationManager
     private var isActive = false
+    private var trackDistance: Int = 0
+    private val points = arrayListOf<Location>()
+    private var previousPoint: Location? = null
+
     override fun onCreate() {
         super.onCreate()
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
@@ -51,6 +56,7 @@ class LocationService : Service(), LocationListener {
         createNotificationChannel(this)
 
         val builder = NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
+            .setSmallIcon(R.mipmap.ic_launcher)
             .setContentIntent(
                 PendingIntent.getActivity(
                     this,
@@ -79,15 +85,11 @@ class LocationService : Service(), LocationListener {
     }
 
     override fun onLocationChanged(location: Location) {
-        val intent = configureIntent(location.latitude, location.longitude)
-        sendBroadcast(intent)
-    }
-
-    private fun configureIntent(latitude: Double, longitude: Double): Intent {
-        return Intent(BROADCAST_ACTION_SEND_POINT).apply {
-            putExtra(LATITUDE, latitude)
-            putExtra(LONGITUDE, longitude)
+        if (previousPoint != null) {
+            trackDistance += location.distanceTo(previousPoint).toInt()
         }
+        points.add(location)
+        previousPoint = location
     }
 
     private fun createNotificationChannel(context: Context) {
@@ -106,11 +108,19 @@ class LocationService : Service(), LocationListener {
     }
 
     override fun onDestroy() {
+        sendBroadcast(configureIntent())
         if (isActive) {
             isActive = false
             locationManager.removeUpdates(this)
             stopForeground(true)
         }
         super.onDestroy()
+    }
+
+    private fun configureIntent(): Intent {
+        return Intent(BROADCAST_ACTION_SEND_TRACK_INFO).apply {
+            putParcelableArrayListExtra(ALL_POINTS, points)
+            putExtra(DISTANCE, trackDistance)
+        }
     }
 }

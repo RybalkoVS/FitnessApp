@@ -18,7 +18,6 @@ import java.util.*
 class LocalRepository {
 
     companion object {
-        private const val SELECT_ALL = "*"
         private const val SELECT_MAX_ID = "MAX(id) AS id"
     }
 
@@ -27,7 +26,11 @@ class LocalRepository {
             val tracks = mutableListOf<TrackDbo>()
             var cursor: Cursor? = null
             try {
-                cursor = SelectQueryBuilder().addSelectableField(SELECT_ALL)
+                cursor = SelectQueryBuilder().addSelectableField(Db.DB_ID)
+                    .addSelectableField(Db.TRACK_SERVER_ID)
+                    .addSelectableField(Db.BEGIN_TIME)
+                    .addSelectableField(Db.DURATION)
+                    .addSelectableField(Db.DISTANCE)
                     .setTableName(Db.TRACK_TABLE_NAME)
                     .build(FitnessApp.INSTANCE.database)
                 while (cursor.moveToNext()) {
@@ -53,7 +56,7 @@ class LocalRepository {
                 InsertQueryBuilder().setTable(name = Db.TRACK_TABLE_NAME)
                     .addValueToInsert(
                         fieldName = Db.TRACK_SERVER_ID,
-                        value = track.serverId.toString().uppercase()
+                        value = track.serverId.toString()
                     )
                     .addValueToInsert(
                         fieldName = Db.BEGIN_TIME,
@@ -125,7 +128,10 @@ class LocalRepository {
             val points = mutableListOf<PointDbo>()
             var cursor: Cursor? = null
             try {
-                cursor = SelectQueryBuilder().addSelectableField(SELECT_ALL)
+                cursor = SelectQueryBuilder().addSelectableField(Db.DB_ID)
+                    .addSelectableField(Db.TRACK_ID)
+                    .addSelectableField(Db.LONGITUDE)
+                    .addSelectableField(Db.LATITUDE)
                     .setTableName(Db.POINT_TABLE_NAME)
                     .addWhereParam(name = Db.TRACK_ID, value = trackId.toString())
                     .build(FitnessApp.INSTANCE.database)
@@ -145,11 +151,11 @@ class LocalRepository {
         }
     }
 
-    fun updateTrack(track: TrackDbo): Task<Unit> {
+    fun updateTrackServerId(trackId: Int, serverId: Int): Task<Unit> {
         return Task.callInBackground {
             UpdateQueryBuilder().setTableName(name = Db.TRACK_TABLE_NAME)
-                .addValueToUpdate(name = Db.TRACK_SERVER_ID, value = track.serverId.toString())
-                .addWhereParam(name = Db.DB_ID, value = track.id.toString())
+                .addValueToUpdate(name = Db.TRACK_SERVER_ID, value = serverId.toString())
+                .addWhereParam(name = Db.DB_ID, value = trackId.toString())
                 .build(FitnessApp.INSTANCE.database)
         }
     }
@@ -159,7 +165,8 @@ class LocalRepository {
             val notifications = mutableListOf<Notification>()
             var cursor: Cursor? = null
             try {
-                cursor = SelectQueryBuilder().addSelectableField(SELECT_ALL)
+                cursor = SelectQueryBuilder().addSelectableField(Db.DB_ID)
+                    .addSelectableField(Db.DATE)
                     .setTableName(Db.NOTIFICATIONS_TABLE_NAME)
                     .build(FitnessApp.INSTANCE.database)
                 while (cursor.moveToNext()) {

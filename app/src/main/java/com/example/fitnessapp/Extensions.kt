@@ -17,7 +17,7 @@ fun PointDbo.toLatLng(): LatLng {
     return LatLng(this.latitude, this.longitude)
 }
 
-fun Context?.showMessage(message: String) {
+fun Context.showMessage(message: String) {
     Toast.makeText(
         this,
         message,

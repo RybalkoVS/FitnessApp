@@ -1,9 +1,9 @@
-package com.example.fitnessapp.presentation
+package com.example.fitnessapp.data.repository
 
 import android.content.Context
 import android.content.SharedPreferences
 
-class PreferencesStore {
+class PreferencesRepository {
 
     companion object {
         private const val APP_PREFERENCES = "APP_PREFERENCES"

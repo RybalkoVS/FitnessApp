@@ -27,7 +27,8 @@
         <activity
             android:name=".presentation.run.RunActivity"
             android:exported="true"
-            android:screenOrientation="portrait" />
+            android:screenOrientation="portrait"
+            android:launchMode="singleTop"/>
 
         <activity
             android:name=".presentation.authorization.AuthorizationActivity"
@@ -52,7 +53,8 @@
 
         <service
             android:name=".presentation.run.LocationService"
-            android:enabled="true" />
+            android:enabled="true"
+            android:foregroundServiceType="location" />
     </application>
 
 </manifest>

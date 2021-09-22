@@ -2,8 +2,7 @@ package com.example.fitnessapp.data.model.track
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.fitnessapp.DependencyProvider
-
+import com.example.fitnessapp.DateTimeFormatter
 
 data class TrackDbo(
     var id: Int,
@@ -22,7 +21,7 @@ data class TrackDbo(
         }
 
     val beginTimeDateFormat: String
-        get() = DependencyProvider.dateTimeFormatter.dateWithTimeFormat.format(this.beginTime)
+        get() = DateTimeFormatter.dateWithTimeFormat.format(this.beginTime)
 
     constructor(parcel: Parcel) : this(
         parcel.readInt(),

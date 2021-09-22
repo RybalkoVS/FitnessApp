@@ -36,6 +36,8 @@
     <dimen name="start_btn_margin">16dp</dimen>
     <dimen name="interval_between_views">8dp</dimen>
 
+    <!--animations    -->
     <integer name="def_anim_length">1500</integer>
     <integer name="half_anim_length">750</integer>
+    <integer name="splash_anim_length">3000</integer>
 </resources>
