@@ -150,7 +150,7 @@ class NotificationListFragment : Fragment(R.layout.fragment_notifications),
     private fun addAlarm(alarmId: Int, date: Long) {
         val intent = Intent(context, AlarmReceiver::class.java)
         val pendingIntent =
-            PendingIntent.getBroadcast(context, alarmId, intent, PendingIntent.FLAG_MUTABLE)
+            PendingIntent.getBroadcast(context, alarmId, intent, 0)
         alarmManager?.set(AlarmManager.RTC_WAKEUP, date, pendingIntent)
     }
 
